@@ -1,0 +1,5 @@
+{
+  "name": "AGV Fleet VLA Intelligence",
+  "description": "A Vision-Language-Action (VLA) dashboard for analyzing AGV incident reports using Gemini multimodal capabilities.",
+  "requestFramePermissions": ["microphone"]
+}

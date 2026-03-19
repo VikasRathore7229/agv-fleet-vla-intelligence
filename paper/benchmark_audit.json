@@ -1,0 +1,41 @@
+{
+  "overview": {
+    "totalScenarios": 4,
+    "clearlySafeCases": 1,
+    "borderlineCases": 1,
+    "clearlyUnsafeCases": 2,
+    "casesWithHistoryContext": 1,
+    "anomalyStressCases": 1,
+    "repeatedScenarioPairs": 0,
+    "rawMediaCases": 0,
+    "benchmarkSchemaBlocks": 2,
+    "dashboardSchemaBlocks": 4
+  },
+  "failureModeTestability": [
+    {
+      "failureMode": "False-safe advisory",
+      "testable": "Limited",
+      "basis": "1 clearly safe case"
+    },
+    {
+      "failureMode": "False-danger advisory",
+      "testable": "Limited",
+      "basis": "1 clearly safe case and 1 borderline case"
+    },
+    {
+      "failureMode": "Unsupported anomaly claim",
+      "testable": "Yes",
+      "basis": "1 explicit anomaly case"
+    },
+    {
+      "failureMode": "History bias",
+      "testable": "No",
+      "basis": "1 history-enabled case and 0 repeated pairs"
+    },
+    {
+      "failureMode": "Cross-modal conflict",
+      "testable": "Limited",
+      "basis": "1 text-only audio/location mismatch case"
+    }
+  ]
+}

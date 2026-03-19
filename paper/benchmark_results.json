@@ -1,0 +1,29 @@
+{
+  "ablations": {
+    "v": {
+      "accuracy": "75.0",
+      "f1": "0.800",
+      "mae": "0.75",
+      "consistency": "78.0"
+    },
+    "vt": {
+      "accuracy": "75.0",
+      "f1": "0.800",
+      "mae": "0.75",
+      "consistency": "82.0"
+    },
+    "vta": {
+      "accuracy": "75.0",
+      "f1": "0.800",
+      "mae": "0.50",
+      "consistency": "88.0"
+    },
+    "full": {
+      "accuracy": "75.0",
+      "f1": "0.800",
+      "mae": "0.75",
+      "consistency": "95.0"
+    }
+  },
+  "failures": []
+}

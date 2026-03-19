@@ -1,0 +1,122 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - displayName: string (optional)
+    //   - role: string (required, 'admin' or 'operator')
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: incident_reports
+    // Document ID: {reportId}
+    // Fields:
+    //   - id: string (required)
+    //   - timestamp: timestamp (required)
+    //   - operatorId: string (required)
+    //   - status: string (required, 'pending', 'reviewed', 'resolved')
+    //   - telemetry: string (optional)
+    //   - avgSpeed: number (optional)
+    //   - distance: number (optional)
+    //   - lat: number (optional)
+    //   - lng: number (optional)
+    //   - audioUrl: string (optional)
+    //   - analysis: map (required)
+    //   - feedback: string (optional)
+    //   - operator_feedback_notes: string (optional)
+    //   - operator_action: string (optional)
+    //   - overridden: boolean (optional)
+    //   - override_warning_shown: string (optional)
+    //   - imageUrl: string (optional)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "vikasrathoreofficial@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['uid', 'email', 'displayName', 'role', 'createdAt']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100 &&
+             data.email is string && isValidEmail(data.email) &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100)) &&
+             data.role in ['admin', 'operator'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidIncidentReport(data) {
+      return hasOnlyAllowedFields(['id', 'timestamp', 'operatorId', 'status', 'telemetry', 'avgSpeed', 'distance', 'lat', 'lng', 'audioUrl', 'analysis', 'feedback', 'operator_feedback_notes', 'operator_action', 'overridden', 'override_warning_shown', 'imageUrl']) &&
+             data.id is string && data.id.size() > 0 && data.id.size() < 100 &&
+             data.timestamp is timestamp &&
+             data.operatorId is string && data.operatorId.size() > 0 && data.operatorId.size() < 100 &&
+             data.status in ['pending', 'reviewed', 'resolved'] &&
+             (!('telemetry' in data) || (data.telemetry is string && data.telemetry.size() < 5000)) &&
+             (!('avgSpeed' in data) || data.avgSpeed is number) &&
+             (!('distance' in data) || data.distance is number) &&
+             (!('lat' in data) || data.lat is number) &&
+             (!('lng' in data) || data.lng is number) &&
+             (!('audioUrl' in data) || (data.audioUrl is string && data.audioUrl.size() < 5000000)) &&
+             (!('feedback' in data) || data.feedback in ['good', 'bad']) &&
+             (!('operator_feedback_notes' in data) || (data.operator_feedback_notes is string && data.operator_feedback_notes.size() < 10000)) &&
+             (!('operator_action' in data) || (data.operator_action is string && data.operator_action.size() < 10000)) &&
+             (!('overridden' in data) || data.overridden is bool) &&
+             (!('override_warning_shown' in data) || (data.override_warning_shown is string && data.override_warning_shown.size() < 10000)) &&
+             (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() < 5000000)) &&
+             data.analysis is map;
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) &&
+                    ((isOwner(userId) && request.resource.data.role == 'operator') || isAdmin()) &&
+                    request.resource.data.uid == userId;
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) &&
+                    ((isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin()) &&
+                    request.resource.data.uid == resource.data.uid &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
+    }
+
+    match /incident_reports/{reportId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidIncidentReport(request.resource.data) &&
+                    request.resource.data.operatorId == request.auth.uid;
+      allow update: if isAuthenticated() && 
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['feedback', 'operator_feedback_notes', 'operator_action', 'overridden', 'override_warning_shown', 'status']) &&
+                    (!('feedback' in request.resource.data) || request.resource.data.feedback in ['good', 'bad']) &&
+                    (!('operator_feedback_notes' in request.resource.data) || (request.resource.data.operator_feedback_notes is string && request.resource.data.operator_feedback_notes.size() < 10000)) &&
+                    (!('operator_action' in request.resource.data) || (request.resource.data.operator_action is string && request.resource.data.operator_action.size() < 10000)) &&
+                    (!('overridden' in request.resource.data) || request.resource.data.overridden is bool) &&
+                    (!('override_warning_shown' in request.resource.data) || (request.resource.data.override_warning_shown is string && request.resource.data.override_warning_shown.size() < 10000)) &&
+                    (!('status' in request.resource.data) || request.resource.data.status in ['pending', 'reviewed', 'resolved']) &&
+                    request.resource.data.operatorId == resource.data.operatorId;
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.operatorId || isAdmin());
+    }
+  }
+}
