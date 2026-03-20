@@ -27,6 +27,8 @@ service cloud.firestore {
     //   - lat: number (optional)
     //   - lng: number (optional)
     //   - audioUrl: string (optional)
+    //   - historyContextSnapshot: string (optional)
+    //   - historyContextSourceIds: list (optional)
     //   - analysis: map (required)
     //   - feedback: string (optional)
     //   - operator_feedback_notes: string (optional)
@@ -71,7 +73,7 @@ service cloud.firestore {
     }
 
     function isValidIncidentReport(data) {
-      return hasOnlyAllowedFields(['id', 'timestamp', 'operatorId', 'status', 'telemetry', 'avgSpeed', 'distance', 'lat', 'lng', 'audioUrl', 'audioUploadStatus', 'audioUploadError', 'analysis', 'feedback', 'operator_feedback_notes', 'operator_action', 'overridden', 'override_warning_shown', 'imageUrl', 'imageUploadStatus', 'imageUploadError']) &&
+      return hasOnlyAllowedFields(['id', 'timestamp', 'operatorId', 'status', 'telemetry', 'avgSpeed', 'distance', 'lat', 'lng', 'audioUrl', 'audioUploadStatus', 'audioUploadError', 'historyContextSnapshot', 'historyContextSourceIds', 'analysis', 'feedback', 'operator_feedback_notes', 'operator_action', 'overridden', 'override_warning_shown', 'imageUrl', 'imageUploadStatus', 'imageUploadError']) &&
              data.id is string && data.id.size() > 0 && data.id.size() < 100 &&
              data.timestamp is timestamp &&
              data.operatorId is string && data.operatorId.size() > 0 && data.operatorId.size() < 100 &&
@@ -84,6 +86,8 @@ service cloud.firestore {
              (!('audioUrl' in data) || (data.audioUrl is string && data.audioUrl.size() < 5000000)) &&
              (!('audioUploadStatus' in data) || data.audioUploadStatus in ['pending', 'uploaded', 'failed', 'not_provided']) &&
              (!('audioUploadError' in data) || (data.audioUploadError is string && data.audioUploadError.size() < 500)) &&
+             (!('historyContextSnapshot' in data) || (data.historyContextSnapshot is string && data.historyContextSnapshot.size() < 20000)) &&
+             (!('historyContextSourceIds' in data) || (data.historyContextSourceIds is list && data.historyContextSourceIds.size() <= 15)) &&
              (!('feedback' in data) || data.feedback in ['good', 'bad']) &&
              (!('operator_feedback_notes' in data) || (data.operator_feedback_notes is string && data.operator_feedback_notes.size() < 10000)) &&
              (!('operator_action' in data) || (data.operator_action is string && data.operator_action.size() < 10000)) &&

@@ -1,0 +1,363 @@
+{
+  "meta": {
+    "sourceCsv": "Deliverables/0_Supported_Files/VLA-1 Rat Kho Final Report/LaTeX_Source/data/incident_history_2026-03-20_1947.csv",
+    "generatedAt": "2026-03-20T19:03:23.080Z",
+    "totalIncidents": 20
+  },
+  "summary": {
+    "totalIncidents": 20,
+    "repeatedObjectGroups": 3,
+    "repeatedRows": 9,
+    "groupsWithScoreVariance": 1,
+    "telemetryAnomalyRows": 2,
+    "rowsWithCompletenessGaps": 3
+  },
+  "repeatedGroups": [
+    {
+      "objectIdentified": "Blue metal hand truck (dolly) with two yellow wheels.",
+      "count": 3,
+      "aliases": [
+        "INC-11",
+        "INC-12",
+        "INC-13"
+      ],
+      "ids": [
+        "xzFdLf92LphcNEHoSWi6",
+        "f4RB4cIuK2QgeuDbjlXO",
+        "2jN3U9WCPkP8Bt9N3iMg"
+      ],
+      "scores": [
+        4,
+        4,
+        4
+      ],
+      "uniqueScores": [
+        4
+      ],
+      "scoreRange": 0,
+      "recommendationVariance": false,
+      "recommendations": [
+        "DO_NOT_OVERRIDE"
+      ],
+      "operatorActionConsistency": true,
+      "operatorActions": [
+        "Don't Override"
+      ],
+      "dataQualityIssues": []
+    },
+    {
+      "objectIdentified": "Large palletized cargo unit wrapped in reflective silver thermal foil.",
+      "count": 3,
+      "aliases": [
+        "INC-18",
+        "INC-19",
+        "INC-20"
+      ],
+      "ids": [
+        "IpxLuahxtd1ie7GwEyWy",
+        "NKF191sUvVFx3gRVAHFD",
+        "F4j9RRbsf6jEYg6pfp0L"
+      ],
+      "scores": [
+        4,
+        4,
+        4
+      ],
+      "uniqueScores": [
+        4
+      ],
+      "scoreRange": 0,
+      "recommendationVariance": false,
+      "recommendations": [
+        "DO_NOT_OVERRIDE"
+      ],
+      "operatorActionConsistency": false,
+      "operatorActions": [
+        "N/A",
+        "Don't Override"
+      ],
+      "dataQualityIssues": [
+        "INC-18:missing_operator_action",
+        "INC-18:missing_feedback"
+      ]
+    },
+    {
+      "objectIdentified": "Two pedestrians/cyclists on the segregated right-hand path.",
+      "count": 3,
+      "aliases": [
+        "INC-01",
+        "INC-02",
+        "INC-03"
+      ],
+      "ids": [
+        "ruugHzq1zqmHDa8fSZh1",
+        "09rb9adhSkyUkQONXgSQ",
+        "wVOrbRM4bTMPiiG4oJz6"
+      ],
+      "scores": [
+        3,
+        2,
+        3
+      ],
+      "uniqueScores": [
+        2,
+        3
+      ],
+      "scoreRange": 1,
+      "recommendationVariance": true,
+      "recommendations": [
+        "CAUTION_ADVISED",
+        "SAFE_TO_OVERRIDE"
+      ],
+      "operatorActionConsistency": true,
+      "operatorActions": [
+        "Force Override"
+      ],
+      "dataQualityIssues": [
+        "INC-02:suspicious_coordinate_pair"
+      ]
+    }
+  ],
+  "repeatedGroupsWithVariance": [
+    {
+      "objectIdentified": "Two pedestrians/cyclists on the segregated right-hand path.",
+      "count": 3,
+      "aliases": [
+        "INC-01",
+        "INC-02",
+        "INC-03"
+      ],
+      "ids": [
+        "ruugHzq1zqmHDa8fSZh1",
+        "09rb9adhSkyUkQONXgSQ",
+        "wVOrbRM4bTMPiiG4oJz6"
+      ],
+      "scores": [
+        3,
+        2,
+        3
+      ],
+      "uniqueScores": [
+        2,
+        3
+      ],
+      "scoreRange": 1,
+      "recommendationVariance": true,
+      "recommendations": [
+        "CAUTION_ADVISED",
+        "SAFE_TO_OVERRIDE"
+      ],
+      "operatorActionConsistency": true,
+      "operatorActions": [
+        "Force Override"
+      ],
+      "dataQualityIssues": [
+        "INC-02:suspicious_coordinate_pair"
+      ]
+    }
+  ],
+  "stableRepeatGroups": [
+    {
+      "objectIdentified": "Blue metal hand truck (dolly) with two yellow wheels.",
+      "count": 3,
+      "stableScore": 4,
+      "operatorActionConsistency": true
+    },
+    {
+      "objectIdentified": "Large palletized cargo unit wrapped in reflective silver thermal foil.",
+      "count": 3,
+      "stableScore": 4,
+      "operatorActionConsistency": false
+    }
+  ],
+  "anomalies": {
+    "telemetry": [
+      {
+        "alias": "INC-02",
+        "id": "09rb9adhSkyUkQONXgSQ",
+        "anomalies": [
+          "suspicious_coordinate_pair"
+        ],
+        "telemetry": "Telemetry: Status: Stopped. Average Speed Before Stop: 10km/h. Distance to object: 12m. Location: Lat 8.537214663958622, Lng 8.537214663958622."
+      },
+      {
+        "alias": "INC-06",
+        "id": "F8BjTE8gzPaJfeH5PpIE",
+        "anomalies": [
+          "missing_numeric_telemetry_fields",
+          "missing_operator_action",
+          "missing_feedback"
+        ],
+        "telemetry": "Telemetry: Status: Stopped. Average Speed Before Stop: km/h. Distance to object: m. Location: Lat , Lng ."
+      }
+    ],
+    "completeness": [
+      {
+        "alias": "INC-06",
+        "id": "F8BjTE8gzPaJfeH5PpIE",
+        "anomalies": [
+          "missing_numeric_telemetry_fields",
+          "missing_operator_action",
+          "missing_feedback"
+        ],
+        "telemetry": "Telemetry: Status: Stopped. Average Speed Before Stop: km/h. Distance to object: m. Location: Lat , Lng ."
+      },
+      {
+        "alias": "INC-17",
+        "id": "IbS2tLk5rpTkhvd8IHsF",
+        "anomalies": [
+          "missing_operator_action",
+          "missing_feedback"
+        ],
+        "telemetry": "Telemetry: Status: Stopped. Average Speed Before Stop: 4km/h. Distance to object: 8m. Location: Lat 50.039301, Lng 8.538442."
+      },
+      {
+        "alias": "INC-18",
+        "id": "IpxLuahxtd1ie7GwEyWy",
+        "anomalies": [
+          "missing_operator_action",
+          "missing_feedback"
+        ],
+        "telemetry": "Telemetry: Status: Stopped. Average Speed Before Stop: 5km/h. Distance to object: 0.5m. Location: Lat 50.0431232, Lng 8.5672398."
+      }
+    ],
+    "all": [
+      {
+        "alias": "INC-02",
+        "id": "09rb9adhSkyUkQONXgSQ",
+        "anomalies": [
+          "suspicious_coordinate_pair"
+        ],
+        "telemetry": "Telemetry: Status: Stopped. Average Speed Before Stop: 10km/h. Distance to object: 12m. Location: Lat 8.537214663958622, Lng 8.537214663958622."
+      },
+      {
+        "alias": "INC-06",
+        "id": "F8BjTE8gzPaJfeH5PpIE",
+        "anomalies": [
+          "missing_numeric_telemetry_fields",
+          "missing_operator_action",
+          "missing_feedback"
+        ],
+        "telemetry": "Telemetry: Status: Stopped. Average Speed Before Stop: km/h. Distance to object: m. Location: Lat , Lng ."
+      },
+      {
+        "alias": "INC-17",
+        "id": "IbS2tLk5rpTkhvd8IHsF",
+        "anomalies": [
+          "missing_operator_action",
+          "missing_feedback"
+        ],
+        "telemetry": "Telemetry: Status: Stopped. Average Speed Before Stop: 4km/h. Distance to object: 8m. Location: Lat 50.039301, Lng 8.538442."
+      },
+      {
+        "alias": "INC-18",
+        "id": "IpxLuahxtd1ie7GwEyWy",
+        "anomalies": [
+          "missing_operator_action",
+          "missing_feedback"
+        ],
+        "telemetry": "Telemetry: Status: Stopped. Average Speed Before Stop: 5km/h. Distance to object: 0.5m. Location: Lat 50.0431232, Lng 8.5672398."
+      }
+    ]
+  },
+  "paperReadySummary": {
+    "totalIncidents": 20,
+    "repeatedObjectGroups": 3,
+    "repeatedRows": 9,
+    "groupsWithScoreVariance": 1,
+    "telemetryAnomalyRows": 2,
+    "rowsWithCompletenessGaps": 3,
+    "repeatedGroupHighlights": [
+      {
+        "objectIdentified": "Blue metal hand truck (dolly) with two yellow wheels.",
+        "count": 3,
+        "scorePattern": "4, 4, 4",
+        "recommendationVariance": false,
+        "operatorActionConsistency": true
+      },
+      {
+        "objectIdentified": "Large palletized cargo unit wrapped in reflective silver thermal foil.",
+        "count": 3,
+        "scorePattern": "4, 4, 4",
+        "recommendationVariance": false,
+        "operatorActionConsistency": false
+      },
+      {
+        "objectIdentified": "Two pedestrians/cyclists on the segregated right-hand path.",
+        "count": 3,
+        "scorePattern": "3, 2, 3",
+        "recommendationVariance": true,
+        "operatorActionConsistency": true
+      }
+    ],
+    "pedestrianCluster": [
+      {
+        "alias": "INC-01",
+        "shortId": "ruugHz",
+        "dangerScore": 3,
+        "recommendedAction": "CAUTION_ADVISED",
+        "operatorAction": "Force Override",
+        "feedback": "good",
+        "noteSummary": "The vehicle can move since the pedestrians are in a different lane.",
+        "telemetry": {
+          "speedKmH": 12,
+          "distanceM": 10,
+          "lat": 50.04151091096052,
+          "lng": 8.537214663958622
+        },
+        "directlyComparable": true,
+        "anomalies": []
+      },
+      {
+        "alias": "INC-02",
+        "shortId": "09rb9a",
+        "dangerScore": 2,
+        "recommendedAction": "SAFE_TO_OVERRIDE",
+        "operatorAction": "Force Override",
+        "feedback": "good",
+        "noteSummary": "Pedestrians not on the same road, safe to proceed.",
+        "telemetry": {
+          "speedKmH": 10,
+          "distanceM": 12,
+          "lat": 8.537214663958622,
+          "lng": 8.537214663958622
+        },
+        "directlyComparable": false,
+        "anomalies": [
+          "suspicious_coordinate_pair"
+        ]
+      },
+      {
+        "alias": "INC-03",
+        "shortId": "wVOrbR",
+        "dangerScore": 3,
+        "recommendedAction": "CAUTION_ADVISED",
+        "operatorAction": "Force Override",
+        "feedback": "good",
+        "noteSummary": "Pedestrians are on the different lane as of the AGV driving. its safe to proceed.",
+        "telemetry": {
+          "speedKmH": 10,
+          "distanceM": 12,
+          "lat": 50.04151091096052,
+          "lng": 8.537214663958622
+        },
+        "directlyComparable": true,
+        "anomalies": []
+      }
+    ],
+    "stableRepeatGroups": [
+      {
+        "objectIdentified": "Blue metal hand truck (dolly) with two yellow wheels.",
+        "count": 3,
+        "stableScore": 4,
+        "operatorActionConsistency": true
+      },
+      {
+        "objectIdentified": "Large palletized cargo unit wrapped in reflective silver thermal foil.",
+        "count": 3,
+        "stableScore": 4,
+        "operatorActionConsistency": false
+      }
+    ]
+  }
+}

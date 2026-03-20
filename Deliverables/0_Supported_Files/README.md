@@ -9,6 +9,11 @@ This folder contains working material that supports the final deliverables.
 
 ## Current structure
 
-- `1_Project_Report/LaTeX_Source/`: report source, bibliography, report figures, and benchmark outputs
-- `2_Presentation/SLIDE_OUTLINE.md`: presentation outline and speaker notes
-- `3_Functional_Diagram/System_Architecture_Diagram.png`: older diagram export retained only for reference
+- `VLA-1 Rat Kho Final Report/LaTeX_Source/`: report source, bibliography, figures, CSV audit input, and benchmark outputs
+- `VLA-1 Rat Kho Presentation/SLIDE_OUTLINE.md`: presentation outline and speaker notes
+- `VLA-1 Rat Kho Functional Diagram/System_Architecture_Diagram.png`: older diagram export retained only for reference
+
+## Documentation references
+
+- Prototype link: `https://ai.studio/apps/1e9fbbe8-161d-4aa6-bc88-e74c2078070a?fullscreenApplet=true`
+- The incident-history CSV under the report support folder is the reproducible operational audit input for the paper

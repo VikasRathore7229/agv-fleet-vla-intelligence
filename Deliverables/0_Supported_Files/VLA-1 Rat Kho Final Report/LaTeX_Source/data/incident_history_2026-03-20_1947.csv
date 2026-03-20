@@ -1,0 +1,81 @@
+ID,Timestamp,Object Identified,Danger Score,Recommended Action,Operator Action,Feedback,Operator Notes,Telemetry
+ruugHzq1zqmHDa8fSZh1,2026-03-20T17:54:05.163Z,"Two pedestrians/cyclists on the segregated right-hand path.",3,"CAUTION_ADVISED","Force Override",good,"The vehicle can move since the pedestrians are in a different lane. ","Telemetry: Status: Stopped. Average Speed Before Stop: 12km/h. Distance to object: 10m. Location: Lat 50.04151091096052, Lng 8.537214663958622."
+09rb9adhSkyUkQONXgSQ,2026-03-20T16:45:36.207Z,"Two pedestrians/cyclists on the segregated right-hand path.",2,"SAFE_TO_OVERRIDE","Force Override",good,"Pedestrians not on the same road, safe to proceed.","Telemetry: Status: Stopped. Average Speed Before Stop: 10km/h. Distance to object: 12m. Location: Lat 8.537214663958622, Lng 8.537214663958622."
+wVOrbRM4bTMPiiG4oJz6,2026-03-20T16:42:20.407Z,"Two pedestrians/cyclists on the segregated right-hand path.",3,"CAUTION_ADVISED","Force Override",good,"Pedestrians are on the different lane as of the AGV driving. its safe to proceed. ","Telemetry: Status: Stopped. Average Speed Before Stop: 10km/h. Distance to object: 12m. Location: Lat 50.04151091096052, Lng 8.537214663958622."
+LdYbsrPix9Gl9D8wXFZz,2026-03-20T16:39:35.142Z,"Two pedestrians/cyclists on the right-hand side path.",5,"DO_NOT_OVERRIDE","Force Override",bad,"Path is clear, no obstacle ahead. Score 3 is correct. Overriding stop. AGV proceeding at reduced speed.","Telemetry: Status: Stopped. Average Speed Before Stop: 12km/h. Distance to object: 10m. Location: Lat 50.04151091096052, Lng 8.537214663958622."
+Qds7l2PK0yxgtCdtcQF6,2026-03-20T16:38:29.099Z,"Human worker wearing a blue beanie and dark workwear, carrying a large cardboard box.",5,"DO_NOT_OVERRIDE","Don't Override",good,"Single worker carrying box detected in center 
+of AGV aisle approximately 1.2 meters ahead. 
+Worker appears unaware of AGV presence. Score 5 
+correct — human safety is absolute priority. 
+Stop maintained. Suggest future model also 
+detect whether worker is facing toward or away 
+from AGV to better estimate collision risk 
+direction. Worker will be notified via PA system.","Telemetry: Status: Stopped. Average Speed Before Stop: 6km/h. Distance to object: 1.2m. Location: Lat 50.041129, Lng 8.536024."
+F8BjTE8gzPaJfeH5PpIE,2026-03-20T16:38:24.112Z,"Scattered floor debris consisting of wooden planks, timber fragments, and a metal wire mesh grate.",4,"DO_NOT_OVERRIDE","N/A",N/A,"N/A","Telemetry: Status: Stopped. Average Speed Before Stop: km/h. Distance to object: m. Location: Lat , Lng ."
+cYH0QTbPm4k7M8PXuS44,2026-03-20T16:37:26.912Z,"Stationary Toyota forklift (orange and grey) positioned directly in the AGV's path.",4,"DO_NOT_OVERRIDE","Don't Override",good,"Toyota forklift detected parked in warehouse 
+floor partially blocking AGV path. Forklift 
+appears unattended but engine status unknown — 
+could move without warning. Score 5 justified 
+due to heavy vehicle collision risk. Full stop 
+maintained. Future model should attempt to 
+detect whether forklift engine is active via 
+audio cues such as engine hum or beeping. 
+Forklift operator being located to confirm 
+vehicle is secured before AGV proceeds.","Telemetry: Status: Stopped. Average Speed Before Stop: 20km/h. Distance to object: 0.5m. Location: Lat 50.040926, Lng 8.536999."
+H4ECnn8KM4kkR802XOdV,2026-03-20T16:36:30.645Z,"Human worker in brown uniform pulling an orange manual pallet jack with an empty wooden pallet.",5,"DO_NOT_OVERRIDE","Don't Override",good,"Three human workers detected in AGV path — one 
+operating pallet jack directly in lane, one 
+carrying cargo ahead, one standing on right side. 
+Multiple dynamic hazards simultaneously present. 
+Score 5 fully justified. Full stop maintained. 
+Future model improvement: system should count 
+number of humans present and escalate urgency 
+accordingly. Floor supervisor alerted to clear 
+the aisle before AGV resumes.","Telemetry: Status: Stopped. Average Speed Before Stop: 4km/h. Distance to object: 0.3m. Location: Lat 50.043434, Lng 8.543908."
+SVUd8pdO6WhFDaOLTEte,2026-03-20T16:35:15.782Z,"Scattered floor debris consisting of wooden planks, timber fragments, and a metal wire mesh/grate.",4,"DO_NOT_OVERRIDE","Don't Override",good,"Multiple solid obstacles confirmed across floor — 
+broken metal frames, wooden planks, scattered 
+debris throughout path. AGV cannot safely proceed. 
+Score 4 is correct. Manual clearance of entire 
+floor required before AGV operation can resume. 
+Additionally flagging this zone as currently 
+unsuitable for AGV operation. Supervisor notified.","Telemetry: Status: Stopped. Average Speed Before Stop: 4km/h. Distance to object: 0.8m. Location: Lat 50.027128, Lng 8.560750."
+mA2bR02j8nceDO8wfqdX,2026-03-20T16:34:03.905Z,"Yellow zebra-stripe floor markings and three triangular pedestrian warning icons painted on the concrete.",2,"SAFE_TO_OVERRIDE","Force Override",good,"GV stopped at marked pedestrian crossing zone. 
+Yellow warning triangles indicate active crossing 
+area — humans may enter path at any time. No 
+person currently visible but crossing zone is 
+active. Recommend slow-speed proceed with 
+caution.","Telemetry: Status: Stopped. Average Speed Before Stop: 8km/h. Distance to object: 8m. Location: Lat 50.041129, Lng 8.536024."
+xzFdLf92LphcNEHoSWi6,2026-03-20T16:31:11.529Z,"Blue metal hand truck (dolly) with two yellow wheels.",4,"DO_NOT_OVERRIDE","Don't Override",good,"nattended hand truck identified blocking center 
+of aisle. Object is solid with wheels — could 
+move unpredictably if nudged by AGV. No human 
+present but object ownership unclear. Keeping 
+stop in place until hand truck is moved to 
+side. Model correctly flagged as ambiguous — 
+future model should distinguish between 
+attended and unattended equipment.","Telemetry: Status: Stopped. Average Speed Before Stop: 4km/h. Distance to object: 3m. Location: Lat 50.040926, Lng 8.536999."
+f4RB4cIuK2QgeuDbjlXO,2026-03-20T16:20:16.941Z,"Blue metal hand truck (dolly) with two yellow wheels.",4,"DO_NOT_OVERRIDE","Don't Override",good,"N/A","Telemetry: Status: Stopped. Average Speed Before Stop: 3km/h. Distance to object: 2m. Location: Lat 50.040926, Lng 8.536999."
+2jN3U9WCPkP8Bt9N3iMg,2026-03-20T16:17:52.495Z,"Blue metal hand truck (dolly) with two yellow wheels.",4,"DO_NOT_OVERRIDE","Don't Override",good,"Unattended hand truck identified blocking center 
+of aisle. Object is solid with wheels — could 
+move unpredictably if nudged by AGV. No human 
+present but object ownership unclear. Keeping 
+stop in place until hand truck is moved to 
+side. Model correctly flagged as ambiguous — 
+future model should distinguish between 
+attended and unattended equipment.","Telemetry: Status: Stopped. Average Speed Before Stop: 3km/h. Distance to object: 2m. Location: Lat 50.040926, Lng 8.536999."
+lLh9QSxLm0ECeDsKMikr,2026-03-20T16:16:27.074Z,"Yellow zebra-stripe floor markings and triangular safety icons painted on the concrete surface.",1,"SAFE_TO_OVERRIDE","Force Override",good,"AGV stopped at marked pedestrian crossing zone. 
+Yellow warning triangles indicate active crossing 
+area — humans may enter path at any time. No 
+person currently visible but crossing zone is 
+active. Recommend slow-speed proceed with 
+caution. Model should improve detection of 
+floor warning markings as hazard indicators 
+even without physical obstacle present.","Telemetry: Status: Stopped. Average Speed Before Stop: 4km/h. Distance to object: 7m. Location: Lat 50.041129, Lng 8.536024."
+u7EQ4BIFpoir5FavKYum,2026-03-20T15:38:05.285Z,"Horizontal floor marking/tape or reflection.",1,"SAFE_TO_OVERRIDE","Force Override",good,"Its safe to proceed","Telemetry: Status: Stopped. Average Speed Before Stop: 5km/h. Distance to object: 7m. Location: Lat 50.039301, Lng 8.538442."
+3ZEdMSpWwnx7dCUNzkYL,2026-03-20T15:36:12.334Z,"Multiple palletized cargo units and containers positioned at the end of the aisle, obstructing the path.",4,"DO_NOT_OVERRIDE","Force Override",bad,"Path visually confirmed as clear. Floor shows 
+minor surface marks and shadows only — no physical 
+obstacle present. False positive stop triggered 
+by floor reflection or dust particle. Safe to 
+override. AGV can resume at normal speed.","Telemetry: Status: Stopped. Average Speed Before Stop: 6km/h. Distance to object: 4m. Location: Lat 50.039301, Lng 8.538442."
+IbS2tLk5rpTkhvd8IHsF,2026-03-20T15:24:18.123Z,"Multiple large palletized cargo units blocking the end of the aisle.",4,"DO_NOT_OVERRIDE","N/A",N/A,"N/A","Telemetry: Status: Stopped. Average Speed Before Stop: 4km/h. Distance to object: 8m. Location: Lat 50.039301, Lng 8.538442."
+IpxLuahxtd1ie7GwEyWy,2026-03-19T21:29:34.984Z,"Large palletized cargo unit wrapped in reflective silver thermal foil.",4,"DO_NOT_OVERRIDE","N/A",N/A,"N/A","Telemetry: Status: Stopped. Average Speed Before Stop: 5km/h. Distance to object: 0.5m. Location: Lat 50.0431232, Lng 8.5672398."
+NKF191sUvVFx3gRVAHFD,2026-03-19T21:03:44.565Z,"Large palletized cargo unit wrapped in reflective silver thermal foil.",4,"DO_NOT_OVERRIDE","Don't Override",good,"i will attend to this manually. The analysis was fairly accurate.","Telemetry: Status: Stopped. Average Speed Before Stop: 5km/h. Distance to object: 0.5m. Location: Lat 50.1167, Lng 8.6833."
+F4j9RRbsf6jEYg6pfp0L,2026-03-19T20:54:01.521Z,"Large palletized cargo unit wrapped in reflective silver thermal foil.",4,"DO_NOT_OVERRIDE","Don't Override",good,"I will attend to this manually. The analysis was fairly accurate. ","Telemetry: Status: Stopped. Average Speed Before Stop: 5km/h. Distance to object: 0.5m. Location: Lat 50.1167, Lng 8.6833."

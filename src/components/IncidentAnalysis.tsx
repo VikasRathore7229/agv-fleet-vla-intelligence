@@ -591,9 +591,11 @@ export function IncidentAnalysis({ reports }: Props) {
         : null;
 
       // Build past context string
-      const recentContext = reports.slice(0, 15).map(r => 
+      const recentHistoryReports = reports.slice(0, 15);
+      const recentContext = recentHistoryReports.map(r =>
         `Object: ${r.analysis?.perception_engine?.critical_object_identified}, Original Recommendation: ${r.analysis?.action_policy?.recommended_action}, Overridden by Operator: ${r.overridden ? 'Yes (Changed to GO)' : 'No'}, Feedback: ${r.feedback || 'None'}, Operator Notes: ${r.operator_feedback_notes || 'None'}`
       ).join('\n');
+      const recentContextSourceIds = recentHistoryReports.map(report => report.id);
 
       const telemetryString = `Telemetry: Status: Stopped. Average Speed Before Stop: ${avgSpeed}km/h. Distance to object: ${distance}m. Location: Lat ${lat}, Lng ${lng}.`;
 
@@ -652,6 +654,8 @@ export function IncidentAnalysis({ reports }: Props) {
         distance: parseFloat(distance) || 0,
         lat: parseFloat(lat) || 0,
         lng: parseFloat(lng) || 0,
+        historyContextSnapshot: recentContext,
+        historyContextSourceIds: recentContextSourceIds,
         analysis: result,
         ...mediaDocFields,
       };

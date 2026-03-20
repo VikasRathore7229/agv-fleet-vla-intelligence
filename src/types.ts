@@ -23,6 +23,8 @@ export interface IncidentReport {
   audioUrl?: string;
   audioUploadStatus?: MediaUploadStatus;
   audioUploadError?: string;
+  historyContextSnapshot?: string;
+  historyContextSourceIds?: string[];
   analysis: VLAAnalysis;
   feedback?: 'good' | 'bad';
   operator_feedback_notes?: string;

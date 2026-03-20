@@ -8,7 +8,7 @@ This outline is designed around the professor's deliverables and KPI list. It pr
 **Course & Mentorship**: Autonomous Intelligent Systems, Prof. Peter Nauth (Frankfurt University of Applied Sciences)
 
 **Visual**:
-- System architecture thumbnail or a clean dashboard screenshot (e.g., `Deliverables/0_Supported_Files/1_Project_Report/LaTeX_Source/figures/dashboard_screenshot.png`)
+- System architecture thumbnail or a clean dashboard screenshot (e.g., `Deliverables/0_Supported_Files/VLA-1 Rat Kho Final Report/LaTeX_Source/figures/dashboard_screenshot.png`)
 
 **Speaker Notes**:
 > Welcome everyone. Today, Neha and I are presenting "AGV Fleet VLA Intelligence." This project introduces a human-in-the-loop, multimodal decision-support dashboard designed to address false-positive safety stops in Autonomous Guided Vehicles (AGVs). We developed this as part of our Studies in Autonomous Intelligent Systems under the guidance of Professor Peter Nauth.
@@ -49,7 +49,7 @@ This outline is designed around the professor's deliverables and KPI list. It pr
 - **Outputs**: Structured JSON payload driving the dashboard warning state and logging the operator's final override action.
 
 **Visual**:
-- `System_Architecture_Detailed.png` (from `Deliverables/3_Functional_Diagram`)
+- `VLA-1 Rat Kho Architecture Diagram.png` (from `Deliverables/3_Functional_Diagram`)
 
 **Speaker Notes**:
 > Here is how the system handles an incident end-to-end. When an AGV triggers a stop, the operator provides visual media, ambient audio, and telemetry. Our backend combines these inputs with summaries from recent incidents to establish context, and sends an assembled prompt to the Gemini model. Crucially, the model returns a constrained JSON assessment detailing what it "sees" and recommending an action.
@@ -63,7 +63,7 @@ This outline is designed around the professor's deliverables and KPI list. It pr
 - **Firestore Persistence Layer**: Logs the incident context, AI schema, any operator-modified notes, and the final override decision. This enables transparent auditing and subsequent contextual reuse.
 
 **Visual**:
-- A large, clear screenshot of the active dashboard (`Deliverables/0_Supported_Files/1_Project_Report/LaTeX_Source/figures/dashboard_screenshot.png`).
+- A large, clear screenshot of the active dashboard (`Deliverables/0_Supported_Files/VLA-1 Rat Kho Final Report/LaTeX_Source/figures/dashboard_screenshot.png`).
 
 **Speaker Notes**:
 > Let's look at the prototype in action. The operator provides inputs securely through a React and Firebase setup. The critical feature here is the persistence layer: the dashboard not only gives the operator a 1 to 5 rating and clear UI alerts, but once the operator acts, their feedback and the system's reasoning are persisted in Firestore. This builds the very history-log that informs future runs.
@@ -83,7 +83,7 @@ This outline is designed around the professor's deliverables and KPI list. It pr
   - Score 3-5 (Ambiguous, solid, dynamic, anomalies): Maps strictly to "Do Not Override".
 
 **Visual**:
-- The prompt pipeline diagram (`Deliverables/0_Supported_Files/1_Project_Report/LaTeX_Source/figures/prompt_pipeline.png`).
+- The prompt pipeline diagram (`Deliverables/0_Supported_Files/VLA-1 Rat Kho Final Report/LaTeX_Source/figures/prompt_pipeline.png`).
 
 **Speaker Notes**:
 > The AI reasoning is powered by Gemini 3 Flash, with temperature fixed at zero to maintain predictable outputs. To make the model’s reasoning transparent, we enforce a strict four-part JSON schema. On the action end, we established a deeply conservative mapping rubric: only scores 1 and 2—benign objects and soft materials—are recommended as safe to override. Ambiguous objects automatically escalate to "Do Not Override" (Score 3 or higher).
@@ -108,6 +108,7 @@ This outline is designed around the professor's deliverables and KPI list. It pr
 
 ## Slide 8: Evaluation Design
 - **Pilot Benchmark Setup**: Evaluated `4` core text-surrogate scenarios representing different levels of our taxonomy (foil, plastic curtain, wooden crate, location mismatch).
+- **Operational Audit Setup**: Audited `20` exported dashboard incidents to study repeated object groups, score drift, and data-quality issues under operator-like use.
 - **Planned Ablation Studies**:
   - Vision only
   - Vision + Telemetry
@@ -123,7 +124,7 @@ This outline is designed around the professor's deliverables and KPI list. It pr
 - Compact table mapping the ablation groups and intended metrics.
 
 **Speaker Notes**:
-> Our evaluation acts as a pilot framework for future growth. Because our scenarios are drawn from a comprehensive 6-stage taxonomy, we designed ablation tests comparing Vision-only, against Vision-plus-telemetry-and-audio, up to the full historical system. Although our dataset consists of 4 pilot text-surrogates, the architecture for measuring Binary Accuracy and Score Mean Absolute Error is fully in place.
+> Our evaluation now uses two conservative evidence streams. The first is the original 4-case pilot benchmark, which remains useful for scenario framing and schema-flow checks. The second is a 20-incident dashboard export audit, which lets us examine repeated object groups and score drift under operator-like use without spending additional API quota.
 
 ---
 
@@ -132,6 +133,8 @@ This outline is designed around the professor's deliverables and KPI list. It pr
 - **Audit Facts**:
   - `4` Total Scenarios: 1 Safe, 1 Borderline, 2 Unsafe.
   - History influence was only evaluated in 1 scenario; no repeated pairs limiting broad consistency claims.
+  - `20` Exported dashboard incidents: `3` repeated-object groups, `9` repeated rows, and only `1` repeated group with score variance.
+  - The observed `2` versus `3` drift in the pedestrian cluster cannot be treated as pure nondeterminism because one row has malformed telemetry coordinates.
   - Evaluated the ability of the prompt pipeline to catch unsupported anomaly claims (Location mismatch case successfully caught).
 - **Conclusion**: The pilot serves as a successful proof-of-concept for the operator workflow and the bounding of AI claims.
 
@@ -139,7 +142,7 @@ This outline is designed around the professor's deliverables and KPI list. It pr
 - Numeric audit table highlighting the distribution of the 4 test cases.
 
 **Speaker Notes**:
-> The current evidence confirms our pipeline and prompt contracts work. Looking at our pilot audit: out of 4 tests covering safe, borderline, and critically unsafe operations, the system succeeded in handling anomalies—like recognizing when the visual scene directly contradicted the location telemetry. However, because this is an audit of 4 text-surrogate cases, we present this as a strong proof-of-concept. 
+> The current evidence confirms our pipeline and prompt contracts work, but it also shows exactly where the limits are. The 4-case pilot remains a proof-of-concept audit. The 20-row operational export adds a small repeated-case view: three object groups repeat, only one of them varies in score, and that same cluster includes a malformed telemetry row. That is why we describe the drift as localized and input-sensitive rather than claiming generic inconsistency.
 
 ---
 

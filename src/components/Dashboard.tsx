@@ -391,7 +391,7 @@ function HistoryView({ reports, loading }: { reports: IncidentReport[], loading:
               </div>
 
               {/* Raw Data & Warnings */}
-              {(selectedReport.telemetry || selectedReport.override_warning_shown) && (
+              {(selectedReport.telemetry || selectedReport.override_warning_shown || selectedReport.historyContextSnapshot || selectedReport.historyContextSourceIds?.length) && (
                 <div>
                   <h4 className="text-zinc-400 text-xs uppercase tracking-wider font-semibold mb-3">Raw Data & Warnings</h4>
                   <div className="space-y-3">
@@ -407,6 +407,22 @@ function HistoryView({ reports, loading }: { reports: IncidentReport[], loading:
                         <p className="text-sm text-red-400 bg-red-500/10 p-2 rounded border border-red-500/20">{selectedReport.override_warning_shown}</p>
                       </div>
                     )}
+                    {selectedReport.historyContextSnapshot && (
+                      <div>
+                        <span className="text-xs text-zinc-500 block mb-1">Injected History Snapshot</span>
+                        <p className="text-sm font-mono text-zinc-300 bg-black/50 p-2 rounded border border-white/5 whitespace-pre-wrap">
+                          {selectedReport.historyContextSnapshot}
+                        </p>
+                      </div>
+                    )}
+                    {selectedReport.historyContextSourceIds?.length ? (
+                      <div>
+                        <span className="text-xs text-zinc-500 block mb-1">History Source Incident IDs</span>
+                        <p className="text-sm font-mono text-zinc-300 bg-black/50 p-2 rounded border border-white/5 break-all">
+                          {selectedReport.historyContextSourceIds.join(', ')}
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               )}

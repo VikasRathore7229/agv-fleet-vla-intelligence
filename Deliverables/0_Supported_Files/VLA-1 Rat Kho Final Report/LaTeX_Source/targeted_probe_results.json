@@ -1,0 +1,17 @@
+{
+  "meta": {
+    "model": "gemini-2.5-flash",
+    "requestDelayMs": 20000,
+    "retryDelayMs": 60000,
+    "maxRetries": 6,
+    "plannedCalls": 4,
+    "completedCalls": 0,
+    "completedAt": "2026-03-20T19:04:46.378Z"
+  },
+  "status": "blocked",
+  "error": {
+    "status": 403,
+    "message": "{\"error\":{\"code\":403,\"message\":\"Generative Language API has not been used in project 177185200748 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview?project=177185200748 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.\",\"status\":\"PERMISSION_DENIED\",\"details\":[{\"@type\":\"type.googleapis.com/google.rpc.ErrorInfo\",\"reason\":\"SERVICE_DISABLED\",\"domain\":\"googleapis.com\",\"metadata\":{\"service\":\"generativelanguage.googleapis.com\",\"serviceTitle\":\"Generative Language API\",\"activationUrl\":\"https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview?project=177185200748\",\"containerInfo\":\"177185200748\",\"consumer\":\"projects/177185200748\"}},{\"@type\":\"type.googleapis.com/google.rpc.LocalizedMessage\",\"locale\":\"en-US\",\"message\":\"Generative Language API has not been used in project 177185200748 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview?project=177185200748 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.\"},{\"@type\":\"type.googleapis.com/google.rpc.Help\",\"links\":[{\"description\":\"Google developers console API activation\",\"url\":\"https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview?project=177185200748\"}]}]}}"
+  },
+  "scenariosCompleted": []
+}

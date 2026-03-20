@@ -1,63 +1,21 @@
 import 'dotenv/config';
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 import * as fs from 'fs';
 import { SCENARIOS } from './benchmark_config.ts';
+import {
+  MAX_RETRIES,
+  MODEL_NAME,
+  REQUEST_DELAY_MS,
+  RETRY_DELAY_MS,
+  SYSTEM_INSTRUCTION,
+  delay,
+  isSafeGold,
+  isSafeToOverride,
+  jsonSchema,
+} from './benchmark_runtime.ts';
+import { REPORT_SUPPORT_DIR, RESULTS_PATH, STATE_PATH } from './report_paths.ts';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-const MODEL_NAME = process.env.GEMINI_BENCHMARK_MODEL || 'gemini-2.5-flash';
-const REQUEST_DELAY_MS = 20000;
-const RETRY_DELAY_MS = 60000;
-const MAX_RETRIES = 6;
-const REPORT_SUPPORT_DIR = 'Deliverables/0_Supported_Files/1_Project_Report/LaTeX_Source';
-const STATE_PATH = `${REPORT_SUPPORT_DIR}/benchmark_run_state.json`;
-const RESULTS_PATH = `${REPORT_SUPPORT_DIR}/benchmark_results.json`;
-
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-
-const SYSTEM_INSTRUCTION = `Role & Operating Environment:
-You are the centralized Vision-Language-Action (VLA) intelligence system for an Autonomous Guided Vehicle (AGV) fleet operating via a Private 5G network within the Cargo Center. Your primary objective is to analyze multimodal incident reports triggered by AGV safety stops in a complex, brownfield warehouse and tarmac environment.
-
-Input Modalities (Adaptive Handling):
-You will receive a drag-and-drop combination of inputs. Adapt your analysis automatically:
-- Visual Data (Video or 1-3 Images): Analyze the scene. If video/multiple images are provided, prioritize kinetic state (motion) over static appearance.
-- Audio Data: Cross-reference ambient sound. Listen for unseen hazards.
-- Telemetry & Map Data (Text): Process LiDAR/Sonar distances, Average Speed Before Stop, Status (Stopped), and topological map coordinates (Lat/Long).
-
-Cognitive Reasoning Pipeline (Chain-of-Thought):
-Step 1: Scene & Object Description.
-Step 2: Location Anomaly Check.
-Step 3: Multi-modal Synthesis & Confidence.
-Step 4: Action Policy Generation.`;
-
-const jsonSchema = {
-    type: Type.OBJECT,
-    properties: {
-        reasoning_and_commentary: {
-            type: Type.OBJECT,
-            properties: {
-                scene_description: { type: Type.STRING },
-                location_anomaly_check: { type: Type.STRING },
-                audio_visual_synthesis: { type: Type.STRING }
-            },
-            required: ["scene_description", "location_anomaly_check", "audio_visual_synthesis"]
-        },
-        action_policy: {
-            type: Type.OBJECT,
-            properties: {
-                danger_score: { type: Type.INTEGER, description: "1 to 5 scale" },
-                recommended_action: { type: Type.STRING, enum: ["DO_NOT_OVERRIDE", "OVERRIDE_AND_PROCEED_SLOW", "OVERRIDE_AND_PROCEED_NORMAL", "TRIGGER_EMERGENCY_STOP"] },
-                action_justification: { type: Type.STRING }
-            },
-            required: ["danger_score", "recommended_action", "action_justification"]
-        }
-    },
-    required: ["reasoning_and_commentary", "action_policy"]
-};
-
-// Helper to check if score matches
-const isSafeToOverride = (score: number) => score <= 2;
-const isSafeGold = (range: number[]) => range[1] <= 2;
 
 const metrics = {
   v: { correctBinary: 0, unsafeF1Scores: [], scoreAbsErrors: [], consistencyCorrect: 0, total: 0, unsafeTP: 0, unsafeFP: 0, unsafeFN: 0 },

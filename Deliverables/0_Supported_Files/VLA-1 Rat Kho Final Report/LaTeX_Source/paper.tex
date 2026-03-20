@@ -51,7 +51,7 @@ neha.khot@stud.fra-uas.de
 \maketitle
 
 \begin{abstract}
-False-positive safety stops are a routine source of friction in warehouse AGV operations. Proximity sensors appropriately err on the side of caution, but they cannot tell a dangerous obstacle from lightweight material such as wrapping film, paper debris, or hanging plastic. This paper describes a multimodal, vision-language-action (VLA)-inspired decision-support prototype that helps a human operator review those stops rather than automate the override itself. The system accepts visual media, optional ambient audio, typed telemetry, and short summaries of recent incidents, then requests a JSON assessment from a multimodal model. The response includes scene perception, operator-facing commentary, a 1--5 danger score, a recommended action, and interface alerts. We implemented the prototype as a React/Firebase dashboard that logs both model outputs and operator decisions for later audit. The evaluation is intentionally modest: a four-scenario pilot and offline benchmark audit used to test the reporting pipeline, ablation design, and claim boundaries rather than to claim deployment readiness. The contribution of the paper is therefore a concrete prototype, a clear scope boundary, and an evaluation template for a larger future study.
+False-positive safety stops are a routine source of friction in warehouse AGV operations. Proximity sensors appropriately err on the side of caution, but they cannot tell a dangerous obstacle from lightweight material such as wrapping film, paper debris, or hanging plastic. This paper describes a multimodal, vision-language-action (VLA)-inspired decision-support prototype that helps a human operator review those stops rather than automate the override itself. The system accepts visual media, optional ambient audio, typed telemetry, and short summaries of recent incidents, then requests a JSON assessment from a multimodal model. The response includes scene perception, operator-facing commentary, a 1--5 danger score, a recommended action, and interface alerts. We implemented the prototype as a React/Firebase dashboard that logs both model outputs and operator decisions for later audit. The evaluation is intentionally modest: a four-scenario pilot, an offline benchmark audit, and an operational audit of twenty exported dashboard incidents used to test the reporting pipeline, repeat-case behavior, and claim boundaries rather than to claim deployment readiness. The contribution of the paper is therefore a concrete prototype, a clear scope boundary, and an evaluation template for a larger future study.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -97,7 +97,7 @@ This structure is a practical design choice for traceability. It allows the user
 \subsection{Operator Workflow and Persistence}
 After a new incident is analyzed, the dashboard displays the current score, recommendation, supporting commentary, uploaded media, and relevant contextual warnings. The operator can then either force an override or keep the stop in place. In the override case, the system stores the warning text shown to the user, making it possible to audit which caution was presented at decision time. The operator may also rate the analysis as good or bad and attach free-text or transcribed notes.
 
-These decisions are stored in a Firestore incident record that includes status fields, the structured analysis, operator actions, override state, feedback, notes, and optional media payloads. Summary views aggregate common objects, critical events, low-score overrides, and map-based incident distributions. This persistence layer is important for two reasons: it supports operational review, and it provides the recent incident summaries later injected into the advisory prompt.
+These decisions are stored in a Firestore incident record that includes status fields, the structured analysis, operator actions, override state, feedback, notes, optional media payloads, and the exact recent-history snippet injected into the prompt together with its source incident identifiers. Summary views aggregate common objects, critical events, low-score overrides, and map-based incident distributions. This persistence layer is important for two reasons: it supports operational review, and it provides the recent incident summaries later injected into the advisory prompt.
 
 \begin{figure}[t]
 \centering
@@ -182,7 +182,7 @@ A stronger follow-up study should also report representative examples of cross-m
 \end{figure}
 
 \section{Results and Analysis}
-This section reports an offline audit of the current four-case pilot benchmark. Because the archived pilot artifacts do not currently support a reproducible model-side comparison, the focus here is on what can be verified locally and reproducibly from the scenario definitions, schema contracts, and ablation setup.
+This section reports two conservative evidence streams: an offline audit of the current four-case pilot benchmark and a descriptive operational audit of twenty exported dashboard incidents. A separate four-call targeted probe harness was prepared for quota-safe model-side reruns, but the submission benchmark environment returned a service-disabled API error before any call completed, so no additional model outputs are claimed from that harness.
 
 \subsection{Quantitative Reporting}
 Table~\ref{tab:ablation} summarizes the measurable properties of the current pilot benchmark. Three constraints matter immediately. First, the dataset is tiny and weakly balanced: it contains one clearly safe case, one borderline case spanning the safety threshold, and two clearly unsafe cases. Second, the history mechanism is not meaningfully testable because only one case contains any historical context and there are no repeated scenario pairs. Third, the benchmark harness uses text surrogates and a reduced two-block schema, so it does not fully exercise the four-block dashboard contract used in the application.
@@ -194,7 +194,7 @@ These audit results are not a substitute for model evaluation, but they are pref
 \label{tab:ablation}
 \centering
 \footnotesize
-\begin{tabularx}{\textwidth}{@{}lcl@{}}
+\begin{tabularx}{\textwidth}{@{}l c X@{}}
 \toprule
 Audit item & Measured value & Implication \\
 \midrule
@@ -210,30 +210,71 @@ Benchmark schema blocks / dashboard schema blocks & 2 / 4 & Harness under-tests 
 
 \noindent The audit shows that the present pilot is mainly useful for checking scenario framing and interface-contract flow. It is not yet strong enough to support stable claims about modality gains, history-conditioned consistency, or failure frequency.
 
-\subsection{Qualitative Failure Analysis}
-Qualitative review still matters, but under the current constraints the more honest question is which failure modes the pilot can actually test. Unsupported anomaly claims are at least partially assessable because the benchmark includes one explicit location-mismatch case. By contrast, history bias is not meaningfully testable, and false-safe or false-danger behavior can only be weakly stressed because the pilot has just one clearly safe example.
-
-Table~\ref{tab:failure} therefore reports failure-mode testability rather than claimed absence of failures. This reframing is more credible than asserting ``no occurrences'' when the current pilot does not contain enough repeated, history-rich, or raw-media cases to make those statements robust.
+\subsection{Operational Audit of Exported Dashboard Incidents}
+To complement the pilot benchmark, we exported twenty incident records that had been entered manually through the dashboard to mimic operator use. This audit is descriptive rather than statistically representative, but it provides real model outputs, operator actions, and audit traces without consuming additional API quota.
 
 \begin{table}[t]
-\caption{Failure-mode testability under the current offline pilot audit.}
+\caption{Operational audit summary for the exported 20-incident dashboard CSV.}
+\label{tab:opsaudit}
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{@{}l c X@{}}
+\toprule
+Audit item & Measured value & Implication \\
+\midrule
+Exported incidents & 20 & Adds operator-like evidence beyond the scripted pilot \\
+Repeated-object groups & 3 & Repeat-case coverage exists, but remains small \\
+Rows inside repeated-object groups & 9 & Consistency can be examined descriptively only \\
+Repeated groups with score variance & 1 & Score drift is localized rather than widespread \\
+Rows with telemetry anomalies & 2 & One repeated case is not directly comparable \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Table~\ref{tab:repeatped} shows the only repeated-object cluster with score variance. All three rows describe pedestrians or cyclists on a segregated lane to the side of the AGV path, and all three were manually overridden by the operator. Two rows received score~3, while one row received score~2. The lower-scored row, however, also contains suspicious coordinates where latitude and longitude are both reported as approximately \(8.537\), unlike the two geographically plausible Frankfurt-area rows near latitude \(50.04\). The observed \(2\) versus \(3\) split therefore cannot be attributed confidently to pure model nondeterminism; the input telemetry changed as well.
+
+\begin{table}[t]
+\caption{Repeated pedestrian-cluster audit from the exported dashboard incidents. Aliases replace full document IDs.}
+\label{tab:repeatped}
+\centering
+\footnotesize
+\begin{tabularx}{\linewidth}{@{}lclX@{}}
+\toprule
+Alias & Score & Action & Audit note \\
+\midrule
+\codefont{INC-01} & 3 & Force Override & Pedestrians are in a different lane; telemetry is geographically plausible \\
+\codefont{INC-02} & 2 & Force Override & Same qualitative note, but telemetry contains suspicious coordinates \\
+\codefont{INC-03} & 3 & Force Override & Same different-lane interpretation with geographically plausible telemetry \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent By contrast, two repeated-object groups were stable in score across the export: the blue hand-truck group and the reflective silver-foil cargo group both remained at score~4 in all three occurrences. The hand-truck group also kept the same operator action (\emph{Don't Override}) across all three rows. This pattern suggests that the currently observed score drift is localized rather than pervasive across all repeated objects.
+
+\noindent A separate quota-safe targeted probe with four planned model calls was added to compare clean versus malformed telemetry in the pedestrian case and to test exact duplication on the hand-truck case. In the submission workspace, the benchmark key returned a \codefont{403 SERVICE\_DISABLED} response before any call completed. The harness is therefore included for future reruns, but no additional model-side probe results are claimed here.
+
+\subsection{Evidence-Strength Failure Analysis}
+To align the reporting with the numeric-criteria KPI, Table~\ref{tab:failure} uses an evidence-strength scale from \(0\) to \(6\): \(0\) means not testable, \(2\) means a single weak proxy case, \(3\) means partial evidence from multiple or incomplete cases, \(4\) means one direct explicit case, \(5\) means multiple direct cases including a repeated comparison, and \(6\) means broad repeated multimodal coverage. The table reports current evidence strength rather than claimed absence of failure.
+
+\begin{table}[t]
+\caption{Failure-mode evidence strength under the current pilot plus operational audit.}
 \label{tab:failure}
 \centering
 \footnotesize
 \begin{tabularx}{\linewidth}{@{}lXX@{}}
 \toprule
-Failure mode & Testable now? & Audit basis \\
+Failure mode & Strength (0--6) & Current basis \\
 \midrule
-False-safe advisory & Limited & One clearly safe case \\
-False-danger advisory & Limited & One clearly safe case and one borderline case \\
-Unsupported anomaly claim & Yes & One explicit location-mismatch case \\
-History bias & No & One history-enabled case and zero repeated pairs \\
-Cross-modal conflict & Limited & One text-only audio/location mismatch case \\
+False-safe advisory & 2 & One clearly safe pilot case; no repeated false-safe operational cluster \\
+False-danger advisory & 5 & Repeated pedestrian cluster with \(3/2/3\) scores plus additional bad-feedback override cases in the exported audit \\
+Unsupported anomaly claim & 4 & One explicit location-mismatch pilot case and one malformed-telemetry dashboard row \\
+History bias & 0 & Exported incidents predate history-snapshot logging; pilot has one history-enabled case and zero repeated pairs \\
+Cross-modal conflict & 3 & One text-only audio/location mismatch pilot case; no repeated raw-audio operational audit \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\noindent The main conclusion is simple: the current pilot is useful for checking schema flow and scenario framing, not for claiming stable model performance. Any future results table should come from stored per-case outputs on a larger set with repeated-history probes and raw media inputs.
+\noindent The main conclusion is simple: the current evidence supports schema-flow checks, localized repeat-case analysis, and clear data-quality reporting, but it does not support stable claims about model performance. Any stronger future results table should come from stored per-case outputs on a larger set with repeated-history probes, raw media inputs, and rerunnable model-side traces.
 
 \section{Discussion}
 The prototype points to a narrow but plausible role for VLA-style models in industrial autonomy: assisting with stop interpretation when the obstacle is semantically unclear, not replacing the vehicle's safety controller. That boundary matters. Using the remote-operation categories of Parr et al. \cite{parr2024remote}, the dashboard is best understood as a remote-assistance or remote-management tool rather than a remote-driving system. In the current system, the model never issues motion commands to the AGV. It produces an assessment, the operator reviews it, and the dashboard records both the recommendation and the human decision.
@@ -247,7 +288,7 @@ These limitations are not cosmetic caveats. They are the main claim boundaries o
 \section{Conclusion}
 This paper presented a multimodal, VLA-inspired decision-support prototype for analyzing false-positive AGV safety stops in cargo-center environments. The system combines visual media, optional audio, telemetry, and recent incident summaries to produce structured advisory output for a human operator. Its contribution is not autonomous actuation but explainable, persistent, and reviewable support for semantically difficult stop-resolution decisions.
 
-The paper also defined a scenario-based evaluation framework and executed a preliminary four-case pilot, which is best understood as a check that the analysis, logging, and reporting workflow works as intended. Future work should expand the dataset to the planned 48--60 scenarios, replace text surrogates with raw media in the benchmark, archive per-case outputs for reproducible reruns, integrate live sensor ingestion, and study how explanation quality affects operator confidence and decision time. Those steps would move the project from an academic prototype toward a more credible industrial-assistive autonomy pipeline.
+The paper also defined a scenario-based evaluation framework, executed a preliminary four-case pilot, and audited twenty exported dashboard incidents, which together are best understood as checks that the analysis, logging, and reporting workflow works as intended. Future work should expand the dataset to the planned 48--60 scenarios, replace text surrogates with raw media in the benchmark, rerun the quota-safe targeted probe once the benchmark API project is enabled, archive per-case outputs for reproducible reruns, integrate live sensor ingestion, and study how explanation quality affects operator confidence and decision time. Those steps would move the project from an academic prototype toward a more credible industrial-assistive autonomy pipeline.
 
 \section*{Acknowledgment}
 The authors thank Peter Nauth and the Autonomous Intelligent Systems teaching staff for project guidance and feedback. The prototype implementation was developed by the authors with limited AI-assisted coding support in the Antigravity IDE using Claude Opus 4.6 (thinking) for selected implementation tasks. System design choices, evaluation framing, manuscript claims, and final verification remained the responsibility of the authors. Any remaining errors, unsupported claims, or incomplete evaluation details are the responsibility of the authors.

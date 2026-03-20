@@ -1,8 +1,6 @@
 import * as fs from 'fs';
 import { SCENARIOS, isBorderline, isClearlySafe, isClearlyUnsafe } from './benchmark_config.ts';
-
-const REPORT_SUPPORT_DIR = 'Deliverables/0_Supported_Files/1_Project_Report/LaTeX_Source';
-const AUDIT_PATH = `${REPORT_SUPPORT_DIR}/benchmark_audit.json`;
+import { AUDIT_PATH, REPORT_SUPPORT_DIR } from './report_paths.ts';
 
 const total = SCENARIOS.length;
 const clearlySafe = SCENARIOS.filter(s => isClearlySafe(s.goldRange)).length;
