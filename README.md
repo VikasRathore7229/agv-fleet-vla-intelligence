@@ -150,10 +150,14 @@ Notes:
 
 - Main paper source: `Deliverables/0_Supported_Files/VLA-1 Rat Kho Final Report/LaTeX_Source/paper.tex`
 - Compiled report: `Deliverables/1_Project_Report/VLA-1 Rat Kho Final Report.pdf`
+- Final presentation deck: `Deliverables/2_Presentationand_Video/VLA-1 Rat Kho Final Presentation.pptx`
+- Final presentation PDF: `Deliverables/2_Presentationand_Video/VLA-1 Rat Kho Final Presentation.pdf`
 - Operational audit input: `Deliverables/0_Supported_Files/VLA-1 Rat Kho Final Report/LaTeX_Source/data/incident_history_2026-03-20_1947.csv`
 - Functional diagram: `Deliverables/3_Functional_Diagram/VLA-1 Rat Kho Architecture Diagram.png`
 - Standalone conclusion summary: `Deliverables/4_Conclusion_Summary/VLA-1 Rat Kho Final Report Conclusion Summary.md`
 - Presentation support outline: `Deliverables/0_Supported_Files/VLA-1 Rat Kho Presentation/SLIDE_OUTLINE.md`
+- Presentation build spec: `Deliverables/0_Supported_Files/VLA-1 Rat Kho Presentation/presentation_spec.json`
+- Presentation generator: `Deliverables/0_Supported_Files/VLA-1 Rat Kho Presentation/build_presentation.py`
 - Submission source archive: `Deliverables/5_Source_Code/Source_Code.zip`
 
 ## Known limitations

@@ -11,6 +11,9 @@ This folder contains working material that supports the final deliverables.
 
 - `VLA-1 Rat Kho Final Report/LaTeX_Source/`: report source, bibliography, figures, CSV audit input, and benchmark outputs
 - `VLA-1 Rat Kho Presentation/SLIDE_OUTLINE.md`: presentation outline and speaker notes
+- `VLA-1 Rat Kho Presentation/presentation_spec.json`: source-of-truth slide metadata, content, and asset mapping
+- `VLA-1 Rat Kho Presentation/build_presentation.py`: Python generator for the final presentation `.pptx` and `.pdf`
+- `VLA-1 Rat Kho Presentation/README.md`: build instructions for the presentation package
 - `VLA-1 Rat Kho Functional Diagram/System_Architecture_Diagram.png`: older diagram export retained only for reference
 - `VLA-1 Rat Kho App Screenshots/README.md`: screenshot series guide and stable filenames for documentation assets
 - `VLA-1 Rat Kho App Screenshots/SCREENSHOT_GALLERY.md`: ordered markdown gallery that renders the saved screenshots in documentation

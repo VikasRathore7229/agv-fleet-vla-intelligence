@@ -1,0 +1,418 @@
+{
+  "deck": {
+    "project_title": "AGV Fleet VLA Intelligence",
+    "academic_subtitle": "Multimodal Vision-Language-Action Decision Support for False-Positive Safety Stops in Autonomous Guided Vehicles",
+    "authors": [
+      "Vikas Rathore",
+      "Neha Anil Khot"
+    ],
+    "affiliation_lines": [
+      "Information Technology",
+      "Frankfurt University of Applied Sciences",
+      "Autonomous Intelligent Systems",
+      "Under guidance of Prof. Peter Nauth"
+    ],
+    "footer_left": "AGV Fleet VLA Intelligence",
+    "file_stem": "VLA-1 Rat Kho Final Presentation",
+    "slide_size_points": {
+      "width": 960,
+      "height": 540
+    }
+  },
+  "theme": {
+    "background": "#F8FAFC",
+    "surface": "#FFFFFF",
+    "surface_alt": "#EFF6FF",
+    "text": "#0F172A",
+    "muted": "#475569",
+    "border": "#CBD5E1",
+    "primary": "#1D4ED8",
+    "primary_dark": "#1E3A8A",
+    "green": "#15803D",
+    "red": "#B91C1C",
+    "amber": "#B45309",
+    "chip_bg": "#DBEAFE"
+  },
+  "validation": {
+    "incident_history_audit": {
+      "totalIncidents": 20,
+      "repeatedObjectGroups": 3,
+      "repeatedRows": 9,
+      "groupsWithScoreVariance": 1,
+      "telemetryAnomalyRows": 2
+    },
+    "benchmark_audit_overview": {
+      "totalScenarios": 4,
+      "clearlySafeCases": 1,
+      "borderlineCases": 1,
+      "clearlyUnsafeCases": 2,
+      "casesWithHistoryContext": 1,
+      "repeatedScenarioPairs": 0
+    }
+  },
+  "slides": [
+    {
+      "id": "title",
+      "type": "title",
+      "section": "Overview",
+      "eyebrow": "Masters Project Presentation",
+      "title": "AGV Fleet VLA Intelligence",
+      "subtitle": "Multimodal Vision-Language-Action Decision Support for False-Positive Safety Stops in Autonomous Guided Vehicles",
+      "meta_lines": [
+        "Vikas Rathore, Neha Anil Khot",
+        "Information Technology",
+        "Frankfurt University of Applied Sciences",
+        "Autonomous Intelligent Systems",
+        "Project guidance: Prof. Peter Nauth"
+      ],
+      "image": {
+        "path": "Deliverables/0_Supported_Files/VLA-1 Rat Kho Final Report/LaTeX_Source/figures/system_architecture.png"
+      },
+      "bottom_note": "Human-in-the-loop advisory system for operator review of AGV stop events. Prototype evidence, not autonomous actuation."
+    },
+    {
+      "id": "problem",
+      "type": "problem",
+      "section": "Problem",
+      "title": "Problem and Motivation",
+      "bullets": [
+        "False-positive AGV stops reduce throughput and increase operator workload.",
+        "Range sensors can detect distance, but not whether the obstacle is harmless or dangerous.",
+        "Lightweight foil, wrapping film, paper, and soft barriers can trigger the same stop logic as real hazards.",
+        "Operators need faster context to distinguish nuisance stops from genuine risk without removing human authority."
+      ],
+      "left_card": {
+        "title": "Benign nuisance obstacles",
+        "items": [
+          "Loose paper or wrapping material",
+          "Reflective foil or soft plastic sheet",
+          "Visually large but low-mass clutter"
+        ]
+      },
+      "right_card": {
+        "title": "High-risk obstacles",
+        "items": [
+          "Dropped pallet or heavy cargo",
+          "Human worker or moving object",
+          "Solid equipment blocking the AGV path"
+        ]
+      },
+      "bottom_note": "The presentation focuses on a narrow warehouse stop-resolution problem: improving operator review, not replacing the vehicle safety controller."
+    },
+    {
+      "id": "scope",
+      "type": "scope",
+      "section": "Scope",
+      "title": "Objective, Scope, and Contribution",
+      "objective": "Build a multimodal decision-support dashboard that helps an operator review AGV stop events using media, telemetry, and recent incident history.",
+      "in_scope": [
+        "Operator-facing advisory dashboard",
+        "Schema-constrained multimodal reasoning",
+        "Incident persistence and traceability",
+        "Prototype-level evaluation and audit tooling"
+      ],
+      "out_scope": [
+        "Autonomous actuation or motion control",
+        "Live fleet integration or teleoperation",
+        "Industrial deployment readiness claims",
+        "Large-scale validated benchmark claims"
+      ],
+      "contributions": [
+        "Implemented multimodal advisory prototype",
+        "Structured operator workflow and persistence layer",
+        "Conservative evaluation and CSV-backed audit framework"
+      ]
+    },
+    {
+      "id": "architecture",
+      "type": "architecture",
+      "section": "System",
+      "title": "System Architecture",
+      "bullets": [
+        "Inputs: image or video frame, optional audio, typed telemetry, and recent incident summaries.",
+        "Processing: Gemini multimodal analysis with a constrained JSON response contract.",
+        "Outputs: danger score, recommended action, commentary, and UI trigger state.",
+        "Persistence: Firestore stores both model output and operator decision for later audit and reuse."
+      ],
+      "image": {
+        "path": "Deliverables/3_Functional_Diagram/VLA-1 Rat Kho Architecture Diagram.png"
+      },
+      "caption": "Functional diagram of the advisory pipeline from multimodal inputs to operator-facing recommendation and persistence."
+    },
+    {
+      "id": "workflow",
+      "type": "workflow",
+      "section": "Workflow",
+      "title": "Prototype Workflow",
+      "steps": [
+        {
+          "label": "1. Capture",
+          "caption": "Operator provides incident media and typed telemetry in the prototype UI.",
+          "image": {
+            "path": "Deliverables/0_Supported_Files/VLA-1 Rat Kho App Screenshots/02_live_analysis_overview.png",
+            "crop": {
+              "left": 0.08,
+              "top": 0.02,
+              "right": 0.98,
+              "bottom": 0.80
+            }
+          }
+        },
+        {
+          "label": "2. Analyze",
+          "caption": "The advisory engine returns status, score, and recommended operator action.",
+          "image": {
+            "path": "Deliverables/0_Supported_Files/VLA-1 Rat Kho App Screenshots/04_analysis_result_header.png",
+            "crop": {
+              "left": 0.48,
+              "top": 0.08,
+              "right": 0.98,
+              "bottom": 0.83
+            }
+          }
+        },
+        {
+          "label": "3. Decide",
+          "caption": "The operator confirms the stop or forces an override; the final action is logged.",
+          "image": {
+            "path": "Deliverables/0_Supported_Files/VLA-1 Rat Kho App Screenshots/06_analysis_result_operator_decision.png"
+          }
+        }
+      ],
+      "bottom_note": "The implemented workflow remains human-in-the-loop at the final decision point."
+    },
+    {
+      "id": "contract",
+      "type": "contract",
+      "section": "Reasoning",
+      "title": "Model Contract and Decision Taxonomy",
+      "config_items": [
+        "Main advisory model: gemini-3-flash-preview",
+        "Deterministic decoding: temperature = 0.0",
+        "Response format: application/json",
+        "Prompt includes multimodal evidence and recent incident context"
+      ],
+      "schema_blocks": [
+        "perception_engine",
+        "reasoning_and_commentary",
+        "action_policy",
+        "ui_triggers"
+      ],
+      "score_mapping": [
+        "Scores 1-2: Safe to Override",
+        "Scores 3-5: Keep Stop / Do Not Override"
+      ],
+      "image": {
+        "path": "Deliverables/0_Supported_Files/VLA-1 Rat Kho Final Report/LaTeX_Source/figures/prompt_pipeline.png"
+      }
+    },
+    {
+      "id": "traceability",
+      "type": "traceability",
+      "section": "Traceability",
+      "title": "Persistence, Dashboard, and Traceability",
+      "bullets": [
+        "Firestore stores incident context, model output, operator action, ratings, and notes.",
+        "Dashboard views aggregate total incidents, critical events, and low-score overrides.",
+        "Incident history supports CSV export and later audit of system recommendations versus operator actions.",
+        "History snapshots and source IDs are stored to make future consistency analysis traceable."
+      ],
+      "main_image": {
+        "path": "Deliverables/0_Supported_Files/VLA-1 Rat Kho App Screenshots/07_dashboard_summary_top.png",
+        "crop": {
+          "left": 0.08,
+          "top": 0.00,
+          "right": 0.98,
+          "bottom": 0.78
+        }
+      },
+      "inset_image": {
+        "path": "Deliverables/0_Supported_Files/VLA-1 Rat Kho App Screenshots/09_incident_history.png",
+        "crop": {
+          "left": 0.08,
+          "top": 0.00,
+          "right": 0.98,
+          "bottom": 0.82
+        }
+      }
+    },
+    {
+      "id": "evaluation",
+      "type": "evaluation",
+      "section": "Evaluation",
+      "title": "Evaluation Design",
+      "left_stream": {
+        "title": "Pilot benchmark",
+        "items": [
+          "4 conservative text-surrogate scenarios",
+          "1 clearly safe, 1 borderline, 2 clearly unsafe",
+          "1 history-enabled case",
+          "0 repeated scenario pairs"
+        ]
+      },
+      "right_stream": {
+        "title": "Operational audit",
+        "items": [
+          "20 exported dashboard incidents",
+          "3 repeated object groups and 9 repeated rows",
+          "1 repeated group with score variance",
+          "2 telemetry anomaly rows"
+        ]
+      },
+      "metric_items": [
+        "Binary decision boundary review",
+        "Danger-score drift on repeated cases",
+        "Operator-action traceability",
+        "Data-quality anomaly detection"
+      ],
+      "bottom_note": "The current evidence is prototype-level and descriptive. It is not an industrial validation benchmark."
+    },
+    {
+      "id": "audit_results",
+      "type": "audit_results",
+      "section": "Results",
+      "title": "Operational Audit Results",
+      "cards": [
+        {
+          "label": "Exported incidents",
+          "value": "20",
+          "accent": "primary"
+        },
+        {
+          "label": "Repeated groups",
+          "value": "3",
+          "accent": "primary_dark"
+        },
+        {
+          "label": "Repeated rows",
+          "value": "9",
+          "accent": "amber"
+        },
+        {
+          "label": "Variance groups",
+          "value": "1",
+          "accent": "red"
+        },
+        {
+          "label": "Telemetry anomalies",
+          "value": "2",
+          "accent": "green"
+        }
+      ],
+      "bullets": [
+        "The repeated-case evidence is small but useful for descriptive consistency checks.",
+        "Only one repeated object cluster showed score variance in the export.",
+        "Two repeated object groups remained stable at score 4 across all three occurrences."
+      ],
+      "source_note": "Source: incident_history_audit.json generated from the exported dashboard CSV."
+    },
+    {
+      "id": "repeated_findings",
+      "type": "repeated_findings",
+      "section": "Findings",
+      "title": "Repeated-Case Findings",
+      "headers": [
+        "Alias",
+        "Score",
+        "Operator",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "PED-A",
+          "3/5",
+          "Force Override",
+          "Segregated lane; clean telemetry"
+        ],
+        [
+          "PED-B",
+          "2/5",
+          "Force Override",
+          "Segregated lane; malformed lat/long"
+        ],
+        [
+          "PED-C",
+          "3/5",
+          "Force Override",
+          "Segregated lane; clean telemetry"
+        ]
+      ],
+      "stable_groups": [
+        "Blue hand truck group: 4, 4, 4 and operator kept stop.",
+        "Reflective silver cargo group: 4, 4, 4 across all three rows."
+      ],
+      "bottom_note": "Conclusion: the observed 2 versus 3 split is localized and input-sensitive, not evidence of broad nondeterminism."
+    },
+    {
+      "id": "limitations",
+      "type": "limitations",
+      "section": "Limits",
+      "title": "Challenges, Limitations, and Mitigations",
+      "headers": [
+        "Challenge",
+        "Effect on evidence",
+        "Mitigation in this project"
+      ],
+      "rows": [
+        [
+          "Free-tier quota and API project limits",
+          "Model-side reruns could not be scaled credibly",
+          "Reported the offline audit truthfully and kept a quota-safe probe harness ready"
+        ],
+        [
+          "Small pilot benchmark",
+          "No strong statistical performance claim is justified",
+          "Framed results as prototype evidence and audit evidence only"
+        ],
+        [
+          "Manual telemetry entry in the prototype",
+          "Operator-entered inputs can introduce noise or malformed fields",
+          "Included telemetry anomalies explicitly in the operational audit"
+        ],
+        [
+          "Text-surrogate benchmark inputs",
+          "Benchmark does not fully match raw-media production conditions",
+          "Separated the pilot benchmark from the operational dashboard audit"
+        ],
+        [
+          "No formal HCI field study",
+          "Operator trust and speed effects remain unvalidated",
+          "Positioned HCI evaluation as future work"
+        ]
+      ],
+      "bottom_note": "The advisory-only system boundary is intentional and remains appropriate given current VLM spatial-reasoning limits."
+    },
+    {
+      "id": "conclusion",
+      "type": "conclusion",
+      "section": "Outlook",
+      "title": "Conclusion and Future Work",
+      "takeaways": [
+        "A working multimodal AGV advisory prototype was implemented.",
+        "The strongest contribution is the operator workflow, persistence layer, and traceability design.",
+        "The present evidence is limited but honest, reproducible, and appropriate for a masters-level prototype."
+      ],
+      "future_work": [
+        "Expand the benchmark from 4 scenarios to a wider and more varied case set.",
+        "Automate live telemetry ingestion through an API or streaming interface.",
+        "Move benchmark coverage from text surrogates to raw media inputs.",
+        "Run an HCI study on operator trust, explanation quality, and review speed."
+      ],
+      "bottom_note": "Best positioning: a credible academic prototype with a clear path to stronger evaluation."
+    },
+    {
+      "id": "references",
+      "type": "references",
+      "section": "Appendix",
+      "title": "Appendix: Selected References",
+      "references": [
+        "Ahn et al. (2022) - SayCan: grounded language for robotics.",
+        "Brohan et al. (2023) - RT-2: vision-language-action modeling for robots.",
+        "Tian et al. (2024) - DriveVLM: staged reasoning for autonomous driving.",
+        "Parr et al. (2024) - remote monitoring, assistance, management, and driving.",
+        "Guo et al. (2024) - SURDS: spatial reasoning limitations in multimodal models."
+      ],
+      "note": "The full bibliography and methodological detail are documented in the project report."
+    }
+  ]
+}
