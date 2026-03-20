@@ -29,6 +29,12 @@ export interface IncidentReport {
 }
 
 export interface VLAAnalysis {
+  input_audit?: {
+    visual_input: string;
+    audio_input: string;
+    telemetry_inputs: string;
+    history_context: string;
+  };
   perception_engine: {
     media_analyzed: string;
     scene_context: string;

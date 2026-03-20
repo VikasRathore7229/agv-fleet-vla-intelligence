@@ -56,6 +56,7 @@ export function IncidentAnalysis({ reports }: Props) {
   const [showDontOverrideConfirm, setShowDontOverrideConfirm] = useState(false);
   const [resetCountdown, setResetCountdown] = useState<number | null>(null);
   const [showAllSimilar, setShowAllSimilar] = useState(false);
+  const [reportSaveError, setReportSaveError] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -336,6 +337,7 @@ export function IncidentAnalysis({ reports }: Props) {
     setLoading(true);
     setAnalysis(null);
     setCurrentReportId(null);
+    setReportSaveError(null);
     setFeedbackGiven(null);
     setIsOverridden(false);
 
@@ -364,8 +366,6 @@ export function IncidentAnalysis({ reports }: Props) {
         telemetryString,
         recentContext
       );
-
-      setAnalysis(result);
 
       const docRef = doc(collection(db, 'incident_reports'));
       const [storedImageUrl, storedAudioUrl] = await Promise.all([
@@ -424,9 +424,11 @@ export function IncidentAnalysis({ reports }: Props) {
           console.warn('Saved without media due to size constraints.');
         } catch (retryError) {
           console.error('Firestore save failed entirely:', retryError);
-          alert('Warning: Could not save report to database. Analysis results are still displayed.');
+          setReportSaveError('Analysis completed, but the incident record could not be saved. Feedback and final operator actions are disabled until persistence succeeds.');
         }
       }
+
+      setAnalysis(result);
 
     } catch (error) {
       console.error(error);
@@ -437,7 +439,10 @@ export function IncidentAnalysis({ reports }: Props) {
   };
 
   const handleFeedback = async (type: 'good' | 'bad') => {
-    if (!currentReportId) return;
+    if (!currentReportId) {
+      alert('The incident report is not saved yet. Please wait for persistence to complete before submitting feedback.');
+      return;
+    }
     try {
       await updateDoc(doc(db, 'incident_reports', currentReportId), { feedback: type });
       setFeedbackGiven(type);
@@ -463,7 +468,10 @@ export function IncidentAnalysis({ reports }: Props) {
   };
 
   const confirmOverride = async () => {
-    if (!currentReportId) return;
+    if (!currentReportId) {
+      alert('The incident report is not saved yet. Please wait for persistence to complete before making the final decision.');
+      return;
+    }
     try {
       await updateDoc(doc(db, 'incident_reports', currentReportId), { 
         overridden: true,
@@ -508,7 +516,10 @@ export function IncidentAnalysis({ reports }: Props) {
   };
 
   const confirmDontOverride = async () => {
-    if (!currentReportId) return;
+    if (!currentReportId) {
+      alert('The incident report is not saved yet. Please wait for persistence to complete before making the final decision.');
+      return;
+    }
     try {
       await updateDoc(doc(db, 'incident_reports', currentReportId), {
         overridden: false,
@@ -913,6 +924,30 @@ export function IncidentAnalysis({ reports }: Props) {
               </div>
             </div>
 
+            {analysis.input_audit && (
+              <div className="bg-black/30 border border-white/5 rounded-lg p-4">
+                <h4 className="text-zinc-400 text-xs uppercase tracking-wider font-semibold mb-3">Input Audit</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <div className="bg-black/30 p-3 rounded border border-white/5">
+                    <span className="text-zinc-500 block text-xs mb-1">Visual</span>
+                    <span className="text-zinc-200">{analysis.input_audit.visual_input}</span>
+                  </div>
+                  <div className="bg-black/30 p-3 rounded border border-white/5">
+                    <span className="text-zinc-500 block text-xs mb-1">Audio</span>
+                    <span className="text-zinc-200">{analysis.input_audit.audio_input}</span>
+                  </div>
+                  <div className="bg-black/30 p-3 rounded border border-white/5">
+                    <span className="text-zinc-500 block text-xs mb-1">Telemetry</span>
+                    <span className="text-zinc-200">{analysis.input_audit.telemetry_inputs}</span>
+                  </div>
+                  <div className="bg-black/30 p-3 rounded border border-white/5">
+                    <span className="text-zinc-500 block text-xs mb-1">History</span>
+                    <span className="text-zinc-200">{analysis.input_audit.history_context}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* High-Risk Zone Warning */}
             {nearbyIncidents.length > 0 && (
               <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 flex items-start gap-3">
@@ -1088,26 +1123,38 @@ export function IncidentAnalysis({ reports }: Props) {
                 <div className="flex gap-2">
                   <button 
                     onClick={() => handleFeedback('good')}
-                    disabled={feedbackGiven !== null}
+                    disabled={feedbackGiven !== null || !currentReportId || !!reportSaveError}
                     className={`flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                       feedbackGiven === 'good' ? 'bg-green-500/20 text-green-500 border border-green-500/50' : 
-                      feedbackGiven === 'bad' ? 'opacity-50 cursor-not-allowed' : 'bg-white/5 hover:bg-white/10 text-zinc-300'
+                      feedbackGiven === 'bad' || !currentReportId || !!reportSaveError ? 'opacity-50 cursor-not-allowed' : 'bg-white/5 hover:bg-white/10 text-zinc-300'
                     }`}
                   >
                     <ThumbsUp className="w-4 h-4" /> Good
                   </button>
                   <button 
                     onClick={() => handleFeedback('bad')}
-                    disabled={feedbackGiven !== null}
+                    disabled={feedbackGiven !== null || !currentReportId || !!reportSaveError}
                     className={`flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                       feedbackGiven === 'bad' ? 'bg-red-500/20 text-red-500 border border-red-500/50' : 
-                      feedbackGiven === 'good' ? 'opacity-50 cursor-not-allowed' : 'bg-white/5 hover:bg-white/10 text-zinc-300'
+                      feedbackGiven === 'good' || !currentReportId || !!reportSaveError ? 'opacity-50 cursor-not-allowed' : 'bg-white/5 hover:bg-white/10 text-zinc-300'
                     }`}
                   >
                     <ThumbsDown className="w-4 h-4" /> Bad
                   </button>
                 </div>
               </div>
+
+              {!currentReportId && (
+                <div className="text-xs text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded px-3 py-2">
+                  Saving incident record. Feedback and final operator actions will unlock once persistence completes.
+                </div>
+              )}
+
+              {reportSaveError && (
+                <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded px-3 py-2">
+                  {reportSaveError}
+                </div>
+              )}
 
               <div className="flex-1 pt-4 border-t border-white/10">
                 {!isOverridden && (
@@ -1121,13 +1168,15 @@ export function IncidentAnalysis({ reports }: Props) {
                     <div className="flex items-center justify-between w-full gap-16">
                       <button 
                         onClick={confirmDontOverride}
-                        className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-lg text-sm font-bold transition-colors shadow-lg shadow-green-500/20"
+                        disabled={!currentReportId || !!reportSaveError}
+                        className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-900/30 disabled:text-zinc-500 disabled:cursor-not-allowed text-white px-5 py-3 rounded-lg text-sm font-bold transition-colors shadow-lg shadow-green-500/20"
                       >
                         <ShieldAlert className="w-5 h-5" /> Don't Override (STOP)
                       </button>
                       <button 
                         onClick={handleOverrideClick}
-                        className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-lg text-sm font-bold transition-colors shadow-lg shadow-red-500/20"
+                        disabled={!currentReportId || !!reportSaveError}
+                        className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-red-900/30 disabled:text-zinc-500 disabled:cursor-not-allowed text-white px-5 py-3 rounded-lg text-sm font-bold transition-colors shadow-lg shadow-red-500/20"
                       >
                         <ShieldOff className="w-5 h-5" /> Force Override (GO)
                       </button>

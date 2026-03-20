@@ -35,7 +35,15 @@ Consistency & Past Feedback (CRITICAL):
 You will be provided with a summary of past incidents. You MUST use this to stay consistent. 
 If the current image and telemetry match a past incident exactly, you MUST output the same analysis.
 If a similar object was previously overridden by the operator (changed to GO), or rated 'bad', you MUST adjust your analysis to correct past mistakes and lower the danger score. If it was rated 'good', follow the same reasoning.
-If 'Operator Notes' are provided in the past context, you MUST incorporate their feedback into your reasoning and action policy.`;
+If 'Operator Notes' are provided in the past context, you MUST incorporate their feedback into your reasoning and action policy.
+
+Input Accountability (MANDATORY):
+You MUST account for every provided input source.
+- Explicitly confirm whether visual input was received.
+- Explicitly confirm whether audio input was received or absent.
+- Explicitly confirm the telemetry values used, including speed, distance, and coordinates if present.
+- Explicitly confirm whether past incident context was provided.
+Populate the \`input_audit\` object to show what was actually read before generating the decision.`;
 
 export async function analyzeIncident(
   imageBytes: string,
@@ -46,6 +54,16 @@ export async function analyzeIncident(
   pastContext: string = ""
 ) {
   const parts: any[] = [];
+  const inputManifest = [
+    `Visual input provided: ${imageBytes ? `yes (${mimeType})` : 'no'}`,
+    `Audio input provided: ${audioBytes && audioMimeType ? `yes (${audioMimeType})` : 'no'}`,
+    `Telemetry provided: ${telemetry || 'no telemetry text provided'}`,
+    `Past incident context provided: ${pastContext ? 'yes' : 'no'}`,
+  ].join('\n');
+
+  parts.push({
+    text: `Input Manifest (you must account for all of these inputs in input_audit before deciding):\n${inputManifest}`,
+  });
 
   if (imageBytes) {
     parts.push({
@@ -83,6 +101,16 @@ export async function analyzeIncident(
       responseSchema: {
         type: Type.OBJECT,
         properties: {
+          input_audit: {
+            type: Type.OBJECT,
+            properties: {
+              visual_input: { type: Type.STRING },
+              audio_input: { type: Type.STRING },
+              telemetry_inputs: { type: Type.STRING },
+              history_context: { type: Type.STRING }
+            },
+            required: ['visual_input', 'audio_input', 'telemetry_inputs', 'history_context']
+          },
           perception_engine: {
             type: Type.OBJECT,
             properties: {
@@ -121,7 +149,7 @@ export async function analyzeIncident(
             required: ['dashboard_color', 'tts_audio_alert']
           }
         },
-        required: ['perception_engine', 'reasoning_and_commentary', 'action_policy', 'ui_triggers']
+        required: ['input_audit', 'perception_engine', 'reasoning_and_commentary', 'action_policy', 'ui_triggers']
       }
     }
   });
