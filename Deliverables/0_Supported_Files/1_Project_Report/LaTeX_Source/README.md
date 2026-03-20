@@ -1,12 +1,11 @@
-# IEEE Paper Materials
+# Project Report Support Files
 
-This directory contains the IEEE-style report, bibliography, figures, and benchmark artifacts for the AGV false-positive stop analysis project.
+This directory contains the source and support material for the final AGV project report. The submission-ready PDF is kept separately at `../../../1_Project_Report/Project_Report.pdf` so the numbered deliverable folder contains only the final report.
 
 ## Files
 
 - `paper.tex`: main manuscript in `IEEEtran` conference format
 - `refs.bib`: bibliography
-- `paper.pdf`: latest compiled report
 - `benchmark_audit.json`: offline audit output for the 4-case pilot
 - `benchmark_results.json`: model-side benchmark output if a successful run exists
 - `benchmark_run_state.json`: checkpoint file used by the conservative benchmark runner
@@ -48,3 +47,7 @@ The paper is strongest when presented as:
 - a small pilot with transparent limitations
 
 It should not be framed as a validated production system or a fully established benchmark study.
+
+## Deliverable structure note
+
+This folder is intentionally under `Deliverables/0_Supported_Files/` so that `Deliverables/1_Project_Report/` can stay limited to the final submission artifact.

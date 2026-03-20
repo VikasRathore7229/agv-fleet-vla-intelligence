@@ -1,6 +1,9 @@
 import * as fs from 'fs';
 import { SCENARIOS, isBorderline, isClearlySafe, isClearlyUnsafe } from './benchmark_config.ts';
 
+const REPORT_SUPPORT_DIR = 'Deliverables/0_Supported_Files/1_Project_Report/LaTeX_Source';
+const AUDIT_PATH = `${REPORT_SUPPORT_DIR}/benchmark_audit.json`;
+
 const total = SCENARIOS.length;
 const clearlySafe = SCENARIOS.filter(s => isClearlySafe(s.goldRange)).length;
 const borderline = SCENARIOS.filter(s => isBorderline(s.goldRange)).length;
@@ -52,5 +55,6 @@ const output = {
   ],
 };
 
-fs.writeFileSync('docs/academic_paper/benchmark_audit.json', JSON.stringify(output, null, 2));
-console.log('Done! Wrote docs/academic_paper/benchmark_audit.json');
+fs.mkdirSync(REPORT_SUPPORT_DIR, { recursive: true });
+fs.writeFileSync(AUDIT_PATH, JSON.stringify(output, null, 2));
+console.log(`Done! Wrote ${AUDIT_PATH}`);

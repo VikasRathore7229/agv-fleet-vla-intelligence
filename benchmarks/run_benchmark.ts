@@ -9,7 +9,9 @@ const MODEL_NAME = process.env.GEMINI_BENCHMARK_MODEL || 'gemini-2.5-flash';
 const REQUEST_DELAY_MS = 20000;
 const RETRY_DELAY_MS = 60000;
 const MAX_RETRIES = 6;
-const STATE_PATH = 'docs/academic_paper/benchmark_run_state.json';
+const REPORT_SUPPORT_DIR = 'Deliverables/0_Supported_Files/1_Project_Report/LaTeX_Source';
+const STATE_PATH = `${REPORT_SUPPORT_DIR}/benchmark_run_state.json`;
+const RESULTS_PATH = `${REPORT_SUPPORT_DIR}/benchmark_results.json`;
 
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
@@ -78,6 +80,7 @@ type CachedRun = {
 const rawRuns: CachedRun[] = [];
 
 function writeState() {
+  fs.mkdirSync(REPORT_SUPPORT_DIR, { recursive: true });
   fs.writeFileSync(STATE_PATH, JSON.stringify({
     meta: {
       model: MODEL_NAME,
@@ -262,8 +265,9 @@ async function run() {
     };
   }
 
-  fs.writeFileSync('docs/academic_paper/benchmark_results.json', JSON.stringify(output, null, 2));
-  console.log('Done! Wrote docs/academic_paper/benchmark_results.json');
+  fs.mkdirSync(REPORT_SUPPORT_DIR, { recursive: true });
+  fs.writeFileSync(RESULTS_PATH, JSON.stringify(output, null, 2));
+  console.log(`Done! Wrote ${RESULTS_PATH}`);
 }
 
 run();

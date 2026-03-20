@@ -7,8 +7,8 @@ This outline is designed around the professor's deliverables and KPI list. It pr
 **Team Members**: Vikas Rathore, Neha Anil Khot
 **Course & Mentorship**: Autonomous Intelligent Systems, Prof. Peter Nauth (Frankfurt University of Applied Sciences)
 
-**Visual**: 
-- System architecture thumbnail or a clean dashboard screenshot (e.g., `Deliverables/1_Project_Report/LaTeX_Source/figures/dashboard_screenshot.png`)
+**Visual**:
+- System architecture thumbnail or a clean dashboard screenshot (e.g., `Deliverables/0_Supported_Files/1_Project_Report/LaTeX_Source/figures/dashboard_screenshot.png`)
 
 **Speaker Notes**:
 > Welcome everyone. Today, Neha and I are presenting "AGV Fleet VLA Intelligence." This project introduces a human-in-the-loop, multimodal decision-support dashboard designed to address false-positive safety stops in Autonomous Guided Vehicles (AGVs). We developed this as part of our Studies in Autonomous Intelligent Systems under the guidance of Professor Peter Nauth.
@@ -48,8 +48,8 @@ This outline is designed around the professor's deliverables and KPI list. It pr
 - **Processing Engine**: Schema-constrained Google Gemini Multimodal analysis.
 - **Outputs**: Structured JSON payload driving the dashboard warning state and logging the operator's final override action.
 
-**Visual**: 
-- `System_Architecture_Diagram.png` (from `Deliverables/3_Functional_Diagram`)
+**Visual**:
+- `System_Architecture_Detailed.png` (from `Deliverables/3_Functional_Diagram`)
 
 **Speaker Notes**:
 > Here is how the system handles an incident end-to-end. When an AGV triggers a stop, the operator provides visual media, ambient audio, and telemetry. Our backend combines these inputs with summaries from recent incidents to establish context, and sends an assembled prompt to the Gemini model. Crucially, the model returns a constrained JSON assessment detailing what it "sees" and recommending an action.
@@ -62,8 +62,8 @@ This outline is designed around the professor's deliverables and KPI list. It pr
 - **Operator Decision**: Dashboard displays danger score (1-5) and allows the operator to either "Override" or "Keep Stop".
 - **Firestore Persistence Layer**: Logs the incident context, AI schema, any operator-modified notes, and the final override decision. This enables transparent auditing and subsequent contextual reuse.
 
-**Visual**: 
-- A large, clear screenshot of the active dashboard (`dashboard_screenshot.png`).
+**Visual**:
+- A large, clear screenshot of the active dashboard (`Deliverables/0_Supported_Files/1_Project_Report/LaTeX_Source/figures/dashboard_screenshot.png`).
 
 **Speaker Notes**:
 > Let's look at the prototype in action. The operator provides inputs securely through a React and Firebase setup. The critical feature here is the persistence layer: the dashboard not only gives the operator a 1 to 5 rating and clear UI alerts, but once the operator acts, their feedback and the system's reasoning are persisted in Firestore. This builds the very history-log that informs future runs.
@@ -82,8 +82,8 @@ This outline is designed around the professor's deliverables and KPI list. It pr
   - Score 1-2 (Benign debris, soft material): Maps to "Safe to Override".
   - Score 3-5 (Ambiguous, solid, dynamic, anomalies): Maps strictly to "Do Not Override".
 
-**Visual**: 
-- The prompt pipeline diagram (`prompt_pipeline.png`).
+**Visual**:
+- The prompt pipeline diagram (`Deliverables/0_Supported_Files/1_Project_Report/LaTeX_Source/figures/prompt_pipeline.png`).
 
 **Speaker Notes**:
 > The AI reasoning is powered by Gemini 3 Flash, with temperature fixed at zero to maintain predictable outputs. To make the model’s reasoning transparent, we enforce a strict four-part JSON schema. On the action end, we established a deeply conservative mapping rubric: only scores 1 and 2—benign objects and soft materials—are recommended as safe to override. Ambiguous objects automatically escalate to "Do Not Override" (Score 3 or higher).
