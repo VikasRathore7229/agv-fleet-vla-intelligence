@@ -1,0 +1,18 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(operatorId) {
+      return isAuthenticated() && request.auth.uid == operatorId;
+    }
+
+    match /incident_reports/{operatorId}/{reportId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(operatorId);
+      allow delete: if isOwner(operatorId);
+    }
+  }
+}

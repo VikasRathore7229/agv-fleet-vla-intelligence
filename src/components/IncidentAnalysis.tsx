@@ -2,8 +2,9 @@ import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Upload, Play, AlertTriangle, CheckCircle, Info, Mic, Search, MapPin, Image as ImageIcon, ThumbsUp, ThumbsDown, ShieldOff, ShieldAlert, X, Square, Check, Edit3 } from 'lucide-react';
 import { analyzeIncident, searchSOP, getMapContext, generateSyntheticImage, transcribeAudio } from '../services/geminiService';
 import { VLAAnalysis, IncidentReport } from '../types';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, setDoc } from 'firebase/firestore';
-import { db, auth } from '../firebase';
+import { collection, serverTimestamp, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
+import { db, auth, storage } from '../firebase';
 import { handleFirestoreError } from '../utils/errorHandler';
 import { OperationType } from '../types';
 
@@ -57,6 +58,8 @@ export function IncidentAnalysis({ reports }: Props) {
   const [showAllSimilar, setShowAllSimilar] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (audioFile) {
@@ -68,6 +71,101 @@ export function IncidentAnalysis({ reports }: Props) {
     }
   }, [audioFile]);
 
+  const getFileExtension = (file: File) => {
+    const byName = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : '';
+    if (byName) return byName;
+    return file.type.split('/')[1]?.toLowerCase() || '';
+  };
+
+  const hasSupportedExtension = (file: File, extensions: string[]) => {
+    const ext = getFileExtension(file);
+    return extensions.includes(ext);
+  };
+
+  const isVisualFile = (file: File) =>
+    file.type.startsWith('image/') ||
+    file.type.startsWith('video/') ||
+    hasSupportedExtension(file, ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'mp4', 'mov', 'webm', 'm4v']);
+
+  const isAudioFile = (file: File) =>
+    file.type.startsWith('audio/') ||
+    hasSupportedExtension(file, ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac', 'webm']);
+
+  const setSelectedVisualFile = (file: File) => {
+    setImageFile(file);
+
+    if (file.type.startsWith('image/') || hasSupportedExtension(file, ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'])) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    setImagePreview(null);
+  };
+
+  const setSelectedAudioFile = (file: File) => {
+    setAudioFile(file);
+  };
+
+  const getClipboardFiles = (clipboardData?: DataTransfer | null): File[] => {
+    if (!clipboardData) return [];
+
+    const files: File[] = [];
+    const seen = new Set<string>();
+    const pushFile = (file: File | null) => {
+      if (!file) return;
+      const key = `${file.name}:${file.size}:${file.type}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      files.push(file);
+    };
+
+    Array.from(clipboardData.files || []).forEach(pushFile);
+    Array.from(clipboardData.items || []).forEach((item) => {
+      if (item.kind === 'file') {
+        pushFile(item.getAsFile());
+      }
+    });
+
+    return files;
+  };
+
+  const applyPastedFiles = (files: File[], target: 'both' | 'visual' | 'audio' = 'both') => {
+    let handled = false;
+
+    if (target !== 'audio') {
+      const visualFile = files.find(isVisualFile);
+      if (visualFile) {
+        setSelectedVisualFile(visualFile);
+        handled = true;
+      }
+    }
+
+    if (target !== 'visual') {
+      const audioCandidate = files.find((file) => isAudioFile(file));
+      if (audioCandidate) {
+        setSelectedAudioFile(audioCandidate);
+        handled = true;
+      }
+    }
+
+    return handled;
+  };
+
+  const handlePasteEvent = (e: ClipboardEvent | React.ClipboardEvent<HTMLDivElement>, target: 'both' | 'visual' | 'audio' = 'both') => {
+    const files = getClipboardFiles(e.clipboardData);
+    if (files.length === 0) return false;
+
+    const handled = applyPastedFiles(files, target);
+    if (handled) {
+      e.preventDefault();
+    }
+    return handled;
+  };
+
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
       // Don't intercept paste if user is typing in a text input/textarea
@@ -75,28 +173,7 @@ export function IncidentAnalysis({ reports }: Props) {
         if (e.target.type === 'text' || e.target.type === 'number') return;
       }
 
-      const items = e.clipboardData?.items;
-      if (!items) return;
-
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        if (item.type.indexOf('image') !== -1) {
-          const file = item.getAsFile();
-          if (file) {
-            setImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-          }
-        } else if (item.type.indexOf('audio') !== -1) {
-          const file = item.getAsFile();
-          if (file) {
-            setAudioFile(file);
-          }
-        }
-      }
+      handlePasteEvent(e, 'both');
     };
 
     window.addEventListener('paste', handlePaste as any);
@@ -105,18 +182,12 @@ export function IncidentAnalysis({ reports }: Props) {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setSelectedVisualFile(e.target.files[0]);
     }
   };
 
   const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) setAudioFile(e.target.files[0]);
+    if (e.target.files && e.target.files[0]) setSelectedAudioFile(e.target.files[0]);
   };
 
   const compressImage = (file: File): Promise<string> => {
@@ -131,8 +202,8 @@ export function IncidentAnalysis({ reports }: Props) {
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1280;
-          const MAX_HEIGHT = 720;
+          const MAX_WIDTH = 1600;
+          const MAX_HEIGHT = 1600;
           let width = img.width;
           let height = img.height;
 
@@ -153,8 +224,8 @@ export function IncidentAnalysis({ reports }: Props) {
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
           
-          // Compress to JPEG with 0.7 quality
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          // Keep analysis inputs compact, but avoid visibly aggressive compression.
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
           // Remove the data URL prefix
           const base64 = dataUrl.split(',')[1];
           resolve(base64);
@@ -242,6 +313,24 @@ export function IncidentAnalysis({ reports }: Props) {
     }
   };
 
+  const uploadMediaFile = async (file: File, reportId: string, kind: 'visual' | 'audio') => {
+    const operatorId = auth.currentUser?.uid || 'anonymous';
+    const extension = getFileExtension(file) || (kind === 'visual' ? 'jpg' : 'bin');
+    const objectPath = `incident_reports/${operatorId}/${reportId}/${kind}.${extension}`;
+    const objectRef = storageRef(storage, objectPath);
+
+    await uploadBytes(objectRef, file, {
+      contentType: file.type || undefined,
+      customMetadata: {
+        operatorId,
+        reportId,
+        mediaKind: kind,
+      },
+    });
+
+    return getDownloadURL(objectRef);
+  };
+
   const runAnalysis = async () => {
     if (!imageFile) return alert('Please upload an image or video frame.');
     setLoading(true);
@@ -278,21 +367,30 @@ export function IncidentAnalysis({ reports }: Props) {
 
       setAnalysis(result);
 
-      // Compress media for Firestore storage
-      let compressedAudioBase64: string | null = null;
-      let compressedAudioMime: string | null = null;
-      if (audioFile) {
+      const docRef = doc(collection(db, 'incident_reports'));
+      const [storedImageUrl, storedAudioUrl] = await Promise.all([
+        uploadMediaFile(imageFile, docRef.id, 'visual').catch((error) => {
+          console.warn('Image upload to Firebase Storage failed:', error);
+          return null;
+        }),
+        audioFile
+          ? uploadMediaFile(audioFile, docRef.id, 'audio').catch((error) => {
+              console.warn('Audio upload to Firebase Storage failed:', error);
+              return null;
+            })
+          : Promise.resolve(null),
+      ]);
+
+      let fallbackAudioUrl: string | null = null;
+      if (!storedAudioUrl && audioFile) {
         try {
-          const compressed = await compressAudio(audioFile);
-          compressedAudioBase64 = compressed.base64;
-          compressedAudioMime = compressed.mimeType;
-        } catch (err) {
-          console.warn('Audio compression failed:', err);
+          const compressedAudio = await compressAudio(audioFile);
+          fallbackAudioUrl = `data:${compressedAudio.mimeType};base64,${compressedAudio.base64}`;
+        } catch (error) {
+          console.warn('Audio fallback encoding failed:', error);
         }
       }
 
-      // Save to Firestore
-      const docRef = doc(collection(db, 'incident_reports'));
       const docData: any = {
         id: docRef.id,
         timestamp: serverTimestamp(),
@@ -304,19 +402,20 @@ export function IncidentAnalysis({ reports }: Props) {
         lat: parseFloat(lat) || 0,
         lng: parseFloat(lng) || 0,
         analysis: result,
-        imageUrl: `data:${imageFile.type.startsWith('video/') ? imageFile.type : 'image/jpeg'};base64,${imageBase64}`
+        imageUrl: storedImageUrl || `data:${imageFile.type.startsWith('video/') ? imageFile.type : 'image/jpeg'};base64,${imageBase64}`,
       };
 
-      if (compressedAudioBase64 && compressedAudioMime) {
-        docData.audioUrl = `data:${compressedAudioMime};base64,${compressedAudioBase64}`;
+      if (storedAudioUrl) {
+        docData.audioUrl = storedAudioUrl;
+      } else if (fallbackAudioUrl) {
+        docData.audioUrl = fallbackAudioUrl;
       }
 
       try {
         await setDoc(docRef, docData);
         setCurrentReportId(docRef.id);
       } catch (error) {
-        console.error('Firestore save with media failed, retrying without media:', error);
-        // Retry without base64 media to stay under Firestore 1MB limit
+        console.error('Firestore save with media references failed, retrying without media URLs:', error);
         try {
           delete docData.imageUrl;
           delete docData.audioUrl;
@@ -567,40 +666,48 @@ export function IncidentAnalysis({ reports }: Props) {
           <div>
             <label className="block text-sm font-medium text-zinc-400 mb-2">Visual Data (Image/Video Frame)</label>
             <div 
-              className="relative border-2 border-dashed border-white/10 hover:border-blue-500/50 rounded-xl p-4 flex flex-col items-center justify-center text-center transition-colors cursor-pointer bg-black/20"
+              className="border-2 border-dashed border-white/10 hover:border-blue-500/50 focus:border-blue-500/70 focus:outline-none rounded-xl p-4 flex flex-col items-center justify-center text-center transition-colors cursor-pointer bg-black/20"
+              role="button"
+              tabIndex={0}
+              onClick={() => imageInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  imageInputRef.current?.click();
+                }
+              }}
+              onPaste={(e) => handlePasteEvent(e, 'visual')}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
                 if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                   const file = e.dataTransfer.files[0];
-                  if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
-                    setImageFile(file);
-                    const reader = new FileReader();
-                    reader.onloadend = () => setImagePreview(reader.result as string);
-                    reader.readAsDataURL(file);
+                  if (isVisualFile(file)) {
+                    setSelectedVisualFile(file);
                   }
                 }
               }}
             >
               <input 
+                ref={imageInputRef}
                 type="file" 
                 accept="image/*,video/*" 
                 onChange={handleImageUpload}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                className="hidden"
               />
               {imageFile ? (
                 <>
                   <CheckCircle className="w-6 h-6 text-green-500 mb-2" />
                   <p className="text-sm font-medium text-green-400">Media Selected</p>
                   <p className="text-xs text-zinc-500 mt-1">{imageFile.name || 'Pasted image'}</p>
-                  <p className="text-xs text-blue-500/70 mt-2 font-medium">Click or drag to replace</p>
+                  <p className="text-xs text-blue-500/70 mt-2 font-medium">Click, drag, or paste to replace</p>
                 </>
               ) : (
                 <>
                   <ImageIcon className="w-6 h-6 text-zinc-500 mb-2" />
                   <p className="text-sm font-medium text-zinc-300">Click to upload or drag and drop</p>
                   <p className="text-xs text-zinc-500 mt-1">SVG, PNG, JPG or GIF</p>
-                  <p className="text-xs text-blue-500/70 mt-2 font-medium">You can also paste (Ctrl+V) an image anywhere</p>
+                  <p className="text-xs text-blue-500/70 mt-2 font-medium">You can also paste with Cmd+V or Ctrl+V anywhere on the page</p>
                 </>
               )}
             </div>
@@ -609,37 +716,48 @@ export function IncidentAnalysis({ reports }: Props) {
           <div>
             <label className="block text-sm font-medium text-zinc-400 mb-2">Audio Data (Optional Ambient Sound)</label>
             <div 
-              className="relative border-2 border-dashed border-white/10 hover:border-blue-500/50 rounded-xl p-4 flex flex-col items-center justify-center text-center transition-colors cursor-pointer bg-black/20"
+              className="border-2 border-dashed border-white/10 hover:border-blue-500/50 focus:border-blue-500/70 focus:outline-none rounded-xl p-4 flex flex-col items-center justify-center text-center transition-colors cursor-pointer bg-black/20"
+              role="button"
+              tabIndex={0}
+              onClick={() => audioInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  audioInputRef.current?.click();
+                }
+              }}
+              onPaste={(e) => handlePasteEvent(e, 'audio')}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
                 if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                   const file = e.dataTransfer.files[0];
-                  if (file.type.startsWith('audio/')) {
-                    setAudioFile(file);
+                  if (isAudioFile(file)) {
+                    setSelectedAudioFile(file);
                   }
                 }
               }}
             >
               <input 
+                ref={audioInputRef}
                 type="file" 
                 accept="audio/*" 
                 onChange={handleAudioUpload}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                className="hidden"
               />
               {audioFile ? (
                 <>
                   <CheckCircle className="w-6 h-6 text-green-500 mb-2" />
                   <p className="text-sm font-medium text-green-400">Audio Selected</p>
                   <p className="text-xs text-zinc-500 mt-1">{audioFile.name || 'Pasted audio'}</p>
-                  <p className="text-xs text-blue-500/70 mt-2 font-medium">Click or drag to replace</p>
+                  <p className="text-xs text-blue-500/70 mt-2 font-medium">Click, drag, or paste to replace</p>
                 </>
               ) : (
                 <>
                   <Mic className="w-6 h-6 text-zinc-500 mb-2" />
                   <p className="text-sm font-medium text-zinc-300">Click to upload or drag and drop</p>
                   <p className="text-xs text-zinc-500 mt-1">MP3, WAV, or OGG</p>
-                  <p className="text-xs text-blue-500/70 mt-2 font-medium">You can also paste (Ctrl+V) an audio file anywhere</p>
+                  <p className="text-xs text-blue-500/70 mt-2 font-medium">You can also paste with Cmd+V or Ctrl+V anywhere on the page</p>
                 </>
               )}
             </div>
