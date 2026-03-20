@@ -15,7 +15,7 @@ This folder contains working material that supports the final deliverables.
 - `VLA-1 Rat Kho Presentation/build_presentation.py`: Python generator for the final presentation `.pptx` and `.pdf`
 - `VLA-1 Rat Kho Presentation/README.md`: build instructions for the presentation package
 - `VLA-1 Rat Kho Functional Diagram/System_Architecture_Diagram.png`: older diagram export retained only for reference
-- `Deliverables/3_Functional_Diagram/README.md`: final application functionality report paired with the submitted architecture diagram
+- `Deliverables/3_Functional_Diagram/VLA-1 Rat Kho Application Functionality Report.md`: final application functionality report paired with the submitted architecture diagram
 - `VLA-1 Rat Kho App Screenshots/SCREENSHOT_GALLERY.md`: ordered UI gallery that supports the functionality report with visual evidence
 
 ## Documentation references

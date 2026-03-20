@@ -1,6 +1,6 @@
 # App Screenshot Gallery
 
-This page renders the supporting UI evidence referenced by the application functionality report in [`../../3_Functional_Diagram/README.md`](../../3_Functional_Diagram/README.md). The PNG files in this folder are kept in a fixed order so the application's implemented workflow can be reviewed visually.
+This page renders the supporting UI evidence referenced by the application functionality report in [`../../3_Functional_Diagram/VLA-1 Rat Kho Application Functionality Report.md`](../../3_Functional_Diagram/VLA-1%20Rat%20Kho%20Application%20Functionality%20Report.md). The PNG files in this folder are kept in a fixed order so the application's implemented workflow can be reviewed visually.
 
 ## 1. Sign In
 

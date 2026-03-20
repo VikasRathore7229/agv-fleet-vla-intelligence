@@ -86,7 +86,7 @@ The app is served on port `3000`.
 
 ## App functionality documentation
 
-- Application functionality report: `Deliverables/3_Functional_Diagram/README.md`
+- Application functionality report: `Deliverables/3_Functional_Diagram/VLA-1 Rat Kho Application Functionality Report.md`
 - Supporting UI gallery: `Deliverables/0_Supported_Files/VLA-1 Rat Kho App Screenshots/SCREENSHOT_GALLERY.md`
 - Visual sequence covered: sign in, live analysis, manual parameter input, three operator-result views, two dashboard views, and incident history
 
