@@ -14,6 +14,7 @@ This directory contains the figure assets and figure source files used by `../pa
 
 - Keep the filenames stable so `paper.tex` continues to compile without path changes.
 - Replace the PNGs with higher-quality exports if you refresh the figures for the report.
+- Documentation-only UI screenshots should go under `../../VLA-1 Rat Kho App Screenshots/` rather than this paper-figure folder.
 
 ## Recommended replacement workflow
 

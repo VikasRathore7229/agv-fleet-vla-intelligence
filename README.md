@@ -84,6 +84,12 @@ The app is served on port `3000`.
 
 - Documentation-only prototype link: `https://ai.studio/apps/1e9fbbe8-161d-4aa6-bc88-e74c2078070a?fullscreenApplet=true`
 
+## App screenshot series
+
+- Documentation-only screenshot guide: `Deliverables/0_Supported_Files/VLA-1 Rat Kho App Screenshots/README.md`
+- Screenshot gallery page: `Deliverables/0_Supported_Files/VLA-1 Rat Kho App Screenshots/SCREENSHOT_GALLERY.md`
+- Recommended sequence: sign in, live analysis, manual parameter input, three operator-result views, two dashboard views, and incident history
+
 ## Build and verification
 
 Type-check the project:
