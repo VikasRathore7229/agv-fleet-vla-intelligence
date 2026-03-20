@@ -104,6 +104,11 @@ class PptRenderer:
         self.prs.slide_height = emu(self.height)
         self.slide = None
 
+    def _font_name(self, *, bold: bool = False) -> str:
+        if bold:
+            return self.theme.get("ppt_font_head", self.theme.get("ppt_font_text", "Arial"))
+        return self.theme.get("ppt_font_text", "Arial")
+
     def begin_slide(self) -> None:
         self.slide = self.prs.slides.add_slide(self.prs.slide_layouts[6])
         background = self.slide.background.fill
@@ -184,7 +189,7 @@ class PptRenderer:
             paragraph.line_spacing = Pt(font_size * leading)
             run = paragraph.runs[0]
             run.font.size = Pt(font_size)
-            run.font.name = "Arial"
+            run.font.name = self._font_name(bold=bold)
             run.font.bold = bold
             run.font.color.rgb = ppt_color(color)
         return box
@@ -339,6 +344,11 @@ class PdfRenderer:
         self.theme = spec["theme"]
         self.canvas = canvas.Canvas(str(output_path), pagesize=(self.width, self.height))
 
+    def _font_name(self, *, bold: bool = False) -> str:
+        if bold:
+            return self.theme.get("pdf_font_head", "Helvetica-Bold")
+        return self.theme.get("pdf_font_text", "Helvetica")
+
     def begin_slide(self) -> None:
         self.canvas.setFillColor(pdf_color(self.theme["background"]))
         self.canvas.rect(0, 0, self.width, self.height, stroke=0, fill=1)
@@ -388,7 +398,7 @@ class PdfRenderer:
         align: str = "left",
         leading: float = 1.15,
     ):
-        font_name = "Helvetica-Bold" if bold else "Helvetica"
+        font_name = self._font_name(bold=bold)
         lines: list[str] = []
         for paragraph in text.split("\n"):
             if paragraph == "":
@@ -427,7 +437,7 @@ class PdfRenderer:
         color: str,
         leading: float = 1.18,
     ):
-        font_name = "Helvetica"
+        font_name = self._font_name(bold=False)
         bullet_width = 12
         line_height = font_size * leading
         min_baseline = self.height - (y + height)
@@ -578,20 +588,20 @@ class PdfRenderer:
 
 def render_frame(renderer, title: str, section: str, slide_number: int, total_slides: int, theme: dict):
     renderer.text(42, 26, 620, 28, title, font_size=24, color=theme["text"], bold=True)
-    renderer.panel(810, 22, 108, 24, fill=theme["chip_bg"], line=None)
+    renderer.panel(798, 22, 120, 24, fill=theme["chip_bg"], line=theme["primary_light"], line_width=0.8)
     renderer.text(
-        810,
+        798,
         26,
-        108,
+        120,
         18,
         section.upper(),
         font_size=9.5,
-        color=theme["primary_dark"],
+        color=theme["primary"],
         bold=True,
         align="center",
     )
     renderer.panel(42, 72, 876, 1.2, fill=theme["border"], line=None, radius=False)
-    renderer.text(42, 516, 280, 12, theme["footer_left"], font_size=8.5, color=theme["muted"])
+    renderer.text(42, 516, 280, 12, theme["footer_left"], font_size=8.5, color=theme.get("muted_soft", theme["muted"]))
     renderer.text(
         860,
         516,
@@ -599,13 +609,13 @@ def render_frame(renderer, title: str, section: str, slide_number: int, total_sl
         12,
         f"{slide_number}/{total_slides}",
         font_size=8.5,
-        color=theme["muted"],
+        color=theme.get("muted_soft", theme["muted"]),
         align="right",
     )
 
 
 def render_title(renderer, slide: dict, theme: dict):
-    renderer.panel(48, 60, 168, 24, fill=theme["chip_bg"], line=None)
+    renderer.panel(48, 60, 168, 24, fill=theme["chip_bg"], line=theme["primary_light"], line_width=0.8)
     renderer.text(
         48,
         64,
@@ -613,12 +623,12 @@ def render_title(renderer, slide: dict, theme: dict):
         16,
         slide["eyebrow"],
         font_size=9.5,
-        color=theme["primary_dark"],
+        color=theme["primary"],
         bold=True,
         align="center",
     )
-    renderer.text(48, 108, 420, 68, slide["title"], font_size=30, color=theme["text"], bold=True)
-    renderer.text(48, 180, 430, 80, slide["subtitle"], font_size=15, color=theme["muted"], leading=1.22)
+    renderer.text(48, 108, 420, 72, slide["title"], font_size=34, color=theme["text"], bold=True)
+    renderer.text(48, 186, 430, 80, slide["subtitle"], font_size=15, color=theme["muted"], leading=1.22)
     renderer.text(
         48,
         282,
@@ -656,7 +666,7 @@ def render_title(renderer, slide: dict, theme: dict):
 def render_problem(renderer, slide: dict, theme: dict):
     renderer.bullets(42, 98, 370, 168, slide["bullets"], font_size=14.2, color=theme["text"])
     renderer.panel(438, 98, 220, 182, fill=theme["surface"], line=theme["border"])
-    renderer.text(456, 116, 184, 20, slide["left_card"]["title"], font_size=14.5, color=theme["primary_dark"], bold=True)
+    renderer.text(456, 116, 184, 20, slide["left_card"]["title"], font_size=14.5, color=theme["green"], bold=True)
     renderer.bullets(456, 146, 176, 106, slide["left_card"]["items"], font_size=11.8, color=theme["text"])
 
     renderer.panel(680, 98, 220, 182, fill=theme["surface"], line=theme["border"])
@@ -792,9 +802,9 @@ def render_contract(renderer, slide: dict, theme: dict):
 
     renderer.panel(42, 406, 858, 64, fill=theme["surface"], line=theme["border"])
     renderer.text(60, 420, 220, 16, "Danger-score mapping", font_size=13, color=theme["primary_dark"], bold=True)
-    renderer.panel(300, 418, 250, 28, fill="#DCFCE7", line=None)
+    renderer.panel(300, 418, 250, 28, fill=theme["positive_bg"], line=None)
     renderer.text(300, 424, 250, 16, slide["score_mapping"][0], font_size=12, color=theme["green"], bold=True, align="center")
-    renderer.panel(568, 418, 300, 28, fill="#FEE2E2", line=None)
+    renderer.panel(568, 418, 300, 28, fill=theme["negative_bg"], line=None)
     renderer.text(568, 424, 300, 16, slide["score_mapping"][1], font_size=12, color=theme["red"], bold=True, align="center")
 
 
@@ -869,7 +879,7 @@ def render_audit_results(renderer, slide: dict, theme: dict):
         x = 42 + idx * (card_width + 15)
         renderer.panel(x, 112, card_width, 92, fill=theme["surface"], line=theme["border"])
         renderer.panel(x + 12, 124, 134, 6, fill=accent_map[card["accent"]], line=None, radius=False)
-        renderer.text(x + 16, 144, 126, 16, card["label"], font_size=11, color=theme["muted"], bold=True, align="center")
+        renderer.text(x + 16, 144, 126, 16, card["label"], font_size=11, color=theme.get("muted_soft", theme["muted"]), bold=True, align="center")
         renderer.text(x + 16, 168, 126, 28, card["value"], font_size=25, color=accent_map[card["accent"]], bold=True, align="center")
 
     renderer.panel(42, 238, 858, 152, fill=theme["surface"], line=theme["border"])
@@ -1003,8 +1013,8 @@ def render_slides(renderer, spec: dict) -> None:
         render_fn = SLIDE_RENDERERS[slide["type"]]
         render_fn(renderer, slide, theme)
         if slide["type"] == "title":
-            renderer.text(48, 516, 280, 12, spec["deck"]["footer_left"], font_size=8.5, color=theme["muted"])
-            renderer.text(860, 516, 58, 12, f"{idx}/{total}", font_size=8.5, color=theme["muted"], align="right")
+            renderer.text(48, 516, 280, 12, spec["deck"]["footer_left"], font_size=8.5, color=theme.get("muted_soft", theme["muted"]))
+            renderer.text(860, 516, 58, 12, f"{idx}/{total}", font_size=8.5, color=theme.get("muted_soft", theme["muted"]), align="right")
         if isinstance(renderer, PdfRenderer):
             renderer.end_page()
 

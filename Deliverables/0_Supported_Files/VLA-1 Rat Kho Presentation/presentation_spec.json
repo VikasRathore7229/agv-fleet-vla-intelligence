@@ -20,18 +20,27 @@
     }
   },
   "theme": {
-    "background": "#F8FAFC",
+    "background": "#FFFFFF",
     "surface": "#FFFFFF",
-    "surface_alt": "#EFF6FF",
-    "text": "#0F172A",
-    "muted": "#475569",
-    "border": "#CBD5E1",
-    "primary": "#1D4ED8",
-    "primary_dark": "#1E3A8A",
-    "green": "#15803D",
-    "red": "#B91C1C",
-    "amber": "#B45309",
-    "chip_bg": "#DBEAFE"
+    "surface_alt": "#EEF3FF",
+    "note_bg": "#F5F5F5",
+    "text": "#05164D",
+    "muted": "#595452",
+    "muted_soft": "#948E8D",
+    "border": "#D9D9D2",
+    "primary": "#0C35F2",
+    "primary_light": "#5999FF",
+    "primary_dark": "#05164D",
+    "green": "#388C73",
+    "red": "#BF0A30",
+    "amber": "#706254",
+    "chip_bg": "#EEF3FF",
+    "positive_bg": "#E7F1ED",
+    "negative_bg": "#F7E6EB",
+    "ppt_font_head": "Aptos Display",
+    "ppt_font_text": "Aptos",
+    "pdf_font_head": "Helvetica-Bold",
+    "pdf_font_text": "Helvetica"
   },
   "validation": {
     "incident_history_audit": {
