@@ -115,14 +115,14 @@ export function SummaryView({ reports }: Props) {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Most Common Incidents Triggered */}
-        <div className="lg:col-span-1 bg-[#141414] border border-white/10 rounded-xl p-6 flex flex-col">
+        <div className="lg:col-span-1 bg-[#141414] border border-white/10 rounded-xl p-6 h-fit">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-yellow-500" />
             Most Common Incident Triggers
           </h3>
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="max-h-80 lg:max-h-96 overflow-y-auto pr-2 custom-scrollbar">
             {stats.commonObjects.length > 0 ? (
               <div className="space-y-3">
                 {stats.commonObjects.map(([obj, count], index) => (
@@ -135,7 +135,7 @@ export function SummaryView({ reports }: Props) {
                 ))}
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center text-zinc-500 text-sm italic">
+              <div className="min-h-24 flex items-center justify-center text-zinc-500 text-sm italic">
                 No common triggers identified yet.
               </div>
             )}
@@ -151,28 +151,30 @@ export function SummaryView({ reports }: Props) {
               Most Critical Events (High Danger Score)
             </h3>
             {stats.criticalEvents.length > 0 ? (
-              <div className="space-y-3">
-                {stats.criticalEvents.map((report) => (
-                  <div key={report.id} className="bg-red-950/20 border border-red-500/20 p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-white font-medium">
-                          {report.analysis?.perception_engine?.critical_object_identified || 'Unknown Hazard'}
-                        </span>
-                        <span className="text-xs text-zinc-400">
-                          {report.timestamp?.toDate().toLocaleString()}
-                        </span>
+              <div className="max-h-80 lg:max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-3">
+                  {stats.criticalEvents.map((report) => (
+                    <div key={report.id} className="bg-red-950/20 border border-red-500/20 p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-white font-medium">
+                            {report.analysis?.perception_engine?.critical_object_identified || 'Unknown Hazard'}
+                          </span>
+                          <span className="text-xs text-zinc-400">
+                            {report.timestamp?.toDate().toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-sm text-zinc-400 line-clamp-2">
+                          {report.analysis?.action_policy?.diagnostic_report_for_database}
+                        </p>
                       </div>
-                      <p className="text-sm text-zinc-400 line-clamp-2">
-                        {report.analysis?.action_policy?.diagnostic_report_for_database}
-                      </p>
+                      <div className="shrink-0 flex items-center flex-col justify-center bg-black/40 px-4 py-2 rounded-lg border border-white/5">
+                        <span className="text-xs text-zinc-500 uppercase font-semibold">Score</span>
+                        <span className="text-xl font-bold text-red-500">{report.analysis?.action_policy?.danger_score}/5</span>
+                      </div>
                     </div>
-                    <div className="shrink-0 flex items-center flex-col justify-center bg-black/40 px-4 py-2 rounded-lg border border-white/5">
-                      <span className="text-xs text-zinc-500 uppercase font-semibold">Score</span>
-                      <span className="text-xl font-bold text-red-500">{report.analysis?.action_policy?.danger_score}/5</span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             ) : (
               <p className="text-zinc-500 text-sm italic">No critical events recorded (Score ≥ 3).</p>
@@ -186,28 +188,30 @@ export function SummaryView({ reports }: Props) {
               Non-Critical Events (Low Score, Operator Overridden)
             </h3>
             {stats.nonCriticalOverrides.length > 0 ? (
-              <div className="space-y-3">
-                {stats.nonCriticalOverrides.map((report) => (
-                  <div key={report.id} className="bg-blue-950/20 border border-blue-500/20 p-4 rounded-lg flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-white font-medium text-sm">
-                          {report.analysis?.perception_engine?.scene_context || 'General Environment'}
-                        </span>
-                        <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded border border-blue-500/30">
-                          Score: {report.analysis?.action_policy?.danger_score}/5
-                        </span>
-                      </div>
-                      {report.operator_feedback_notes ? (
-                        <div className="bg-black/40 p-3 rounded text-sm text-zinc-300 border border-white/5 italic">
-                          "{report.operator_feedback_notes}"
+              <div className="max-h-80 lg:max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-3">
+                  {stats.nonCriticalOverrides.map((report) => (
+                    <div key={report.id} className="bg-blue-950/20 border border-blue-500/20 p-4 rounded-lg flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-white font-medium text-sm">
+                            {report.analysis?.perception_engine?.scene_context || 'General Environment'}
+                          </span>
+                          <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded border border-blue-500/30">
+                            Score: {report.analysis?.action_policy?.danger_score}/5
+                          </span>
                         </div>
-                      ) : (
-                        <p className="text-sm text-zinc-500 italic">No operator feedback provided.</p>
-                      )}
+                        {report.operator_feedback_notes ? (
+                          <div className="bg-black/40 p-3 rounded text-sm text-zinc-300 border border-white/5 italic">
+                            "{report.operator_feedback_notes}"
+                          </div>
+                        ) : (
+                          <p className="text-sm text-zinc-500 italic">No operator feedback provided.</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             ) : (
               <p className="text-zinc-500 text-sm italic">No low-severity overrides recorded.</p>
