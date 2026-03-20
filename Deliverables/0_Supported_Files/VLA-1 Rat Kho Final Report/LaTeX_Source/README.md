@@ -46,16 +46,16 @@ This build sequence has been verified locally in the current workspace.
 - The targeted probe is intentionally capped at `4` calls to avoid exhausting the free-tier API budget
 - If the benchmark API project is disabled, `targeted_probe_results.json` records the blocked status rather than silently failing
 
-## Important note for submission
+## Submission positioning
 
-The paper is strongest when presented as:
+The paper is positioned as:
 
 - an implemented prototype
 - a clear operator workflow
 - a structured evaluation framework
 - a small pilot with transparent limitations
 
-It should not be framed as a validated production system or a fully established benchmark study.
+It is not framed as a validated production system or a fully established benchmark study.
 
 ## Deliverable structure note
 

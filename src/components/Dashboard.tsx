@@ -137,8 +137,7 @@ function NavItem({ icon, label, active, onClick }: { icon: React.ReactNode, labe
   );
 }
 
-// Placeholder components for the other tabs to keep the file manageable.
-// I will implement them in separate files or expand them later.
+// Keep the tab view implementations below so the dashboard shell remains readable.
 
 function HistoryView({ reports, loading }: { reports: IncidentReport[], loading: boolean }) {
   const [selectedReport, setSelectedReport] = useState<IncidentReport | null>(null);

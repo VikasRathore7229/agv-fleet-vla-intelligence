@@ -171,11 +171,11 @@ Notes:
 
 ## Submission positioning
 
-The strongest way to present this project is:
+This repository and its deliverables position the project as:
 
 - a working multimodal prototype
 - a clear operator workflow and persistence pipeline
 - a defensible scope boundary
 - a modest pilot evaluation with explicit limitations
 
-The weakest way to present it would be as a validated industrial system. The repository and paper should be read as an academic prototype with a credible path to stronger future evaluation.
+The repository and paper should be read as an academic prototype with a credible path to stronger future evaluation, not as a validated industrial system.
