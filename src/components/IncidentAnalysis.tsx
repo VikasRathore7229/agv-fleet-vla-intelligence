@@ -3,10 +3,10 @@ import { Upload, Play, AlertTriangle, CheckCircle, Info, Mic, Search, MapPin, Im
 import { analyzeIncident, searchSOP, getMapContext, generateSyntheticImage, transcribeAudio } from '../services/geminiService';
 import { VLAAnalysis, IncidentReport } from '../types';
 import { collection, serverTimestamp, doc, updateDoc, setDoc } from 'firebase/firestore';
-import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
-import { db, auth, storage } from '../firebase';
+import { db, auth } from '../firebase';
 import { handleFirestoreError } from '../utils/errorHandler';
 import { OperationType } from '../types';
+import { getMediaUploadDisplay } from '../utils/mediaUploadStatus';
 
 // Haversine formula to calculate distance in meters
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -37,6 +37,7 @@ export function IncidentAnalysis({ reports }: Props) {
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   const [loading, setLoading] = useState(false);
+  const [savingReport, setSavingReport] = useState(false);
   const [analysis, setAnalysis] = useState<VLAAnalysis | null>(null);
   const [currentReportId, setCurrentReportId] = useState<string | null>(null);
   const [feedbackGiven, setFeedbackGiven] = useState<'good' | 'bad' | null>(null);
@@ -57,6 +58,7 @@ export function IncidentAnalysis({ reports }: Props) {
   const [resetCountdown, setResetCountdown] = useState<number | null>(null);
   const [showAllSimilar, setShowAllSimilar] = useState(false);
   const [reportSaveError, setReportSaveError] = useState<string | null>(null);
+  const [mediaSaveWarning, setMediaSaveWarning] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -71,6 +73,55 @@ export function IncidentAnalysis({ reports }: Props) {
       setAudioUrl(null);
     }
   }, [audioFile]);
+
+  useEffect(() => {
+    if (!selectedPastIncident) return;
+
+    const latestReport = reports.find((report) => report.id === selectedPastIncident.id);
+    if (latestReport) {
+      setSelectedPastIncident(latestReport);
+    }
+  }, [reports, selectedPastIncident]);
+
+  const currentSavedReport = currentReportId
+    ? reports.find((report) => report.id === currentReportId) || null
+    : null;
+
+  const currentImageMedia = currentSavedReport
+    ? getMediaUploadDisplay(currentSavedReport, 'image')
+    : imageFile
+      ? {
+          badgeClass: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+          label: imageFile.type.startsWith('video/') ? '📹 Visual Selected' : '📷 Image Selected',
+          detail: 'This file was used for analysis. Media persistence starts after the report is saved.',
+        }
+      : {
+          badgeClass: 'bg-zinc-800 text-zinc-400 border-zinc-700',
+          label: '❌ No Visual Selected',
+          detail: '',
+        };
+
+  const currentAudioMedia = currentSavedReport
+    ? getMediaUploadDisplay(currentSavedReport, 'audio')
+    : audioFile
+      ? {
+          badgeClass: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+          label: '🔊 Audio Selected',
+          detail: 'This clip was used for analysis. Media persistence starts after the report is saved.',
+        }
+      : {
+          badgeClass: 'bg-zinc-800 text-zinc-400 border-zinc-700',
+          label: '🔇 No Audio Provided',
+          detail: '',
+        };
+
+  const selectedPastImageMedia = selectedPastIncident
+    ? getMediaUploadDisplay(selectedPastIncident, 'image')
+    : null;
+
+  const selectedPastAudioMedia = selectedPastIncident
+    ? getMediaUploadDisplay(selectedPastIncident, 'audio')
+    : null;
 
   const getFileExtension = (file: File) => {
     const byName = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : '';
@@ -92,7 +143,7 @@ export function IncidentAnalysis({ reports }: Props) {
     file.type.startsWith('audio/') ||
     hasSupportedExtension(file, ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac', 'webm']);
 
-  const setSelectedVisualFile = (file: File) => {
+  const setSelectedVisualFile = async (file: File) => {
     setImageFile(file);
 
     if (file.type.startsWith('image/') || hasSupportedExtension(file, ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'])) {
@@ -105,6 +156,18 @@ export function IncidentAnalysis({ reports }: Props) {
     }
 
     setImagePreview(null);
+
+    try {
+      const previewAsset = await prepareVisualAsset(file, {
+        maxWidth: 960,
+        maxHeight: 540,
+        quality: 0.72,
+        frameTimeSec: 1,
+      });
+      setImagePreview(previewAsset.dataUrl);
+    } catch (error) {
+      console.warn('Video preview generation failed:', error);
+    }
   };
 
   const setSelectedAudioFile = (file: File) => {
@@ -140,7 +203,7 @@ export function IncidentAnalysis({ reports }: Props) {
     if (target !== 'audio') {
       const visualFile = files.find(isVisualFile);
       if (visualFile) {
-        setSelectedVisualFile(visualFile);
+        void setSelectedVisualFile(visualFile);
         handled = true;
       }
     }
@@ -183,7 +246,7 @@ export function IncidentAnalysis({ reports }: Props) {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedVisualFile(e.target.files[0]);
+      void setSelectedVisualFile(e.target.files[0]);
     }
   };
 
@@ -191,56 +254,30 @@ export function IncidentAnalysis({ reports }: Props) {
     if (e.target.files && e.target.files[0]) setSelectedAudioFile(e.target.files[0]);
   };
 
-  const compressImage = (file: File): Promise<string> => {
-    if (file.type.startsWith('video/')) {
-      return fileToBase64(file);
+  const fitMediaWithinBounds = (width: number, height: number, maxWidth: number, maxHeight: number) => {
+    let nextWidth = width;
+    let nextHeight = height;
+
+    if (nextWidth > nextHeight) {
+      if (nextWidth > maxWidth) {
+        nextHeight *= maxWidth / nextWidth;
+        nextWidth = maxWidth;
+      }
+    } else if (nextHeight > maxHeight) {
+      nextWidth *= maxHeight / nextHeight;
+      nextHeight = maxHeight;
     }
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1600;
-          const MAX_HEIGHT = 1600;
-          let width = img.width;
-          let height = img.height;
 
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
-          
-          // Keep analysis inputs compact, but avoid visibly aggressive compression.
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
-          // Remove the data URL prefix
-          const base64 = dataUrl.split(',')[1];
-          resolve(base64);
-        };
-        img.onerror = (error) => reject(error);
-      };
-      reader.onerror = error => reject(error);
-    });
+    return {
+      width: Math.max(1, Math.round(nextWidth)),
+      height: Math.max(1, Math.round(nextHeight)),
+    };
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
+  const blobToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(blob);
       reader.onload = () => {
         if (typeof reader.result === 'string') {
           const base64 = reader.result.split(',')[1];
@@ -253,103 +290,309 @@ export function IncidentAnalysis({ reports }: Props) {
     });
   };
 
-  const compressAudio = async (file: File): Promise<{ base64: string; mimeType: string }> => {
+  const canvasToJpegAsset = async (canvas: HTMLCanvasElement, quality: number) => {
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((result) => {
+        if (result) {
+          resolve(result);
+          return;
+        }
+        reject(new Error('Failed to encode image preview.'));
+      }, 'image/jpeg', quality);
+    });
+
+    const base64 = await blobToBase64(blob);
+    return {
+      blob,
+      base64,
+      dataUrl: `data:image/jpeg;base64,${base64}`,
+      mimeType: 'image/jpeg',
+    };
+  };
+
+  const prepareImageAsset = async (
+    file: File,
+    options: { maxWidth: number; maxHeight: number; quality: number }
+  ) => {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+    });
+
+    return new Promise<{ blob: Blob; base64: string; dataUrl: string; mimeType: string }>((resolve, reject) => {
+      const img = new Image();
+      img.src = dataUrl;
+      img.onload = async () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const { width, height } = fitMediaWithinBounds(img.width, img.height, options.maxWidth, options.maxHeight);
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(await canvasToJpegAsset(canvas, options.quality));
+        } catch (error) {
+          reject(error);
+        }
+      };
+      img.onerror = reject;
+    });
+  };
+
+  const prepareVideoFrameAsset = async (
+    file: File,
+    options: { maxWidth: number; maxHeight: number; quality: number; frameTimeSec?: number }
+  ) => {
+    return new Promise<{ blob: Blob; base64: string; dataUrl: string; mimeType: string }>((resolve, reject) => {
+      const video = document.createElement('video');
+      const objectUrl = URL.createObjectURL(file);
+      let captured = false;
+
+      const cleanup = () => {
+        URL.revokeObjectURL(objectUrl);
+      };
+
+      const captureFrame = async () => {
+        if (captured || video.videoWidth === 0 || video.videoHeight === 0) return;
+        captured = true;
+
+        try {
+          const canvas = document.createElement('canvas');
+          const { width, height } = fitMediaWithinBounds(
+            video.videoWidth,
+            video.videoHeight,
+            options.maxWidth,
+            options.maxHeight
+          );
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(video, 0, 0, width, height);
+          cleanup();
+          resolve(await canvasToJpegAsset(canvas, options.quality));
+        } catch (error) {
+          cleanup();
+          reject(error);
+        }
+      };
+
+      video.preload = 'metadata';
+      video.muted = true;
+      video.playsInline = true;
+
+      video.onloadedmetadata = () => {
+        const preferredTime = options.frameTimeSec ?? 1;
+        const safeDuration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
+        const targetTime = safeDuration > 0 ? Math.min(preferredTime, Math.max(0, safeDuration - 0.1)) : 0;
+
+        if (targetTime <= 0) {
+          captureFrame().catch(reject);
+          return;
+        }
+
+        video.currentTime = targetTime;
+      };
+
+      video.onseeked = () => {
+        captureFrame().catch(reject);
+      };
+
+      video.onloadeddata = () => {
+        if (video.currentTime === 0) {
+          captureFrame().catch(reject);
+        }
+      };
+
+      video.onerror = (event) => {
+        cleanup();
+        reject(event);
+      };
+
+      video.src = objectUrl;
+    });
+  };
+
+  const prepareVisualAsset = async (
+    file: File,
+    options: { maxWidth: number; maxHeight: number; quality: number; frameTimeSec?: number }
+  ) => {
+    if (file.type.startsWith('video/')) {
+      return prepareVideoFrameAsset(file, options);
+    }
+
+    return prepareImageAsset(file, options);
+  };
+
+  const encodeAudioBufferAsWav = (audioBuffer: AudioBuffer, sampleRate: number) => {
+    const channelData = audioBuffer.getChannelData(0);
+    const wavBuffer = new ArrayBuffer(44 + channelData.length * 2);
+    const view = new DataView(wavBuffer);
+    const writeString = (offset: number, str: string) => {
+      for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+    };
+
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + channelData.length * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, channelData.length * 2, true);
+
+    let offset = 44;
+    for (let i = 0; i < channelData.length; i++) {
+      const sample = Math.max(-1, Math.min(1, channelData[i]));
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+      offset += 2;
+    }
+
+    return new Blob([wavBuffer], { type: 'audio/wav' });
+  };
+
+  const prepareAudioAsset = async (
+    file: File,
+    options: { maxDurationSec: number; sampleRate: number }
+  ): Promise<{ blob: Blob; base64: string; mimeType: string; clippedDurationSec: number }> => {
     try {
       const audioContext = new AudioContext();
       const arrayBuffer = await file.arrayBuffer();
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
       await audioContext.close();
 
-      // Downsample to 16kHz mono
-      const targetSampleRate = 16000;
-      const numSamples = Math.floor(audioBuffer.duration * targetSampleRate);
-      const offlineCtx = new OfflineAudioContext(1, numSamples, targetSampleRate);
+      const clippedDurationSec = Math.min(audioBuffer.duration, options.maxDurationSec);
+      const numSamples = Math.max(1, Math.floor(clippedDurationSec * options.sampleRate));
+      const offlineCtx = new OfflineAudioContext(1, numSamples, options.sampleRate);
       const source = offlineCtx.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(offlineCtx.destination);
-      source.start();
+      source.start(0, 0, clippedDurationSec);
       const renderedBuffer = await offlineCtx.startRendering();
-
-      // Encode as 16-bit PCM WAV
-      const channelData = renderedBuffer.getChannelData(0);
-      const wavBuffer = new ArrayBuffer(44 + channelData.length * 2);
-      const view = new DataView(wavBuffer);
-      const writeString = (offset: number, str: string) => {
-        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
-      };
-      writeString(0, 'RIFF');
-      view.setUint32(4, 36 + channelData.length * 2, true);
-      writeString(8, 'WAVE');
-      writeString(12, 'fmt ');
-      view.setUint32(16, 16, true);
-      view.setUint16(20, 1, true); // PCM
-      view.setUint16(22, 1, true); // mono
-      view.setUint32(24, targetSampleRate, true);
-      view.setUint32(28, targetSampleRate * 2, true); // byte rate
-      view.setUint16(32, 2, true); // block align
-      view.setUint16(34, 16, true); // bits per sample
-      writeString(36, 'data');
-      view.setUint32(40, channelData.length * 2, true);
-      let offset = 44;
-      for (let i = 0; i < channelData.length; i++) {
-        const s = Math.max(-1, Math.min(1, channelData[i]));
-        view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
-        offset += 2;
-      }
-
-      const wavBlob = new Blob([wavBuffer], { type: 'audio/wav' });
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(wavBlob);
-        reader.onloadend = () => {
-          const base64 = (reader.result as string).split(',')[1];
-          resolve({ base64, mimeType: 'audio/wav' });
-        };
-        reader.onerror = reject;
-      });
+      const wavBlob = encodeAudioBufferAsWav(renderedBuffer, options.sampleRate);
+      const base64 = await blobToBase64(wavBlob);
+      return { blob: wavBlob, base64, mimeType: 'audio/wav', clippedDurationSec };
     } catch (err) {
-      console.warn('Audio compression failed, using original:', err);
-      const base64 = await fileToBase64(file);
-      return { base64, mimeType: file.type };
+      console.warn('Audio preparation failed, using original:', err);
+      const base64 = await blobToBase64(file);
+      return {
+        blob: file,
+        base64,
+        mimeType: file.type || 'audio/*',
+        clippedDurationSec: 0,
+      };
     }
   };
 
-  const uploadMediaFile = async (file: File, reportId: string, kind: 'visual' | 'audio') => {
-    const operatorId = auth.currentUser?.uid || 'anonymous';
-    const extension = getFileExtension(file) || (kind === 'visual' ? 'jpg' : 'bin');
-    const objectPath = `incident_reports/${operatorId}/${reportId}/${kind}.${extension}`;
-    const objectRef = storageRef(storage, objectPath);
+  const buildInlineMediaUrl = async (blob: Blob) => {
+    const base64 = await blobToBase64(blob);
+    return `data:${blob.type || 'application/octet-stream'};base64,${base64}`;
+  };
 
-    await uploadBytes(objectRef, file, {
-      contentType: file.type || undefined,
-      customMetadata: {
-        operatorId,
-        reportId,
-        mediaKind: kind,
-      },
-    });
+  const prepareInlineVisualUrl = async (file: File) => {
+    const presets = [
+      { maxWidth: 512, maxHeight: 512, quality: 0.42, frameTimeSec: 1, maxChars: 220000 },
+      { maxWidth: 384, maxHeight: 384, quality: 0.32, frameTimeSec: 1, maxChars: 160000 },
+      { maxWidth: 320, maxHeight: 320, quality: 0.26, frameTimeSec: 1, maxChars: 120000 },
+    ];
 
-    return getDownloadURL(objectRef);
+    let fallbackUrl = '';
+    for (const preset of presets) {
+      const asset = await prepareVisualAsset(file, preset);
+      const dataUrl = await buildInlineMediaUrl(asset.blob);
+      fallbackUrl = dataUrl;
+      if (dataUrl.length <= preset.maxChars) {
+        return dataUrl;
+      }
+    }
+
+    return fallbackUrl;
+  };
+
+  const prepareInlineAudioUrl = async (file: File) => {
+    const presets = [
+      { maxDurationSec: 6, sampleRate: 8000, maxChars: 180000 },
+      { maxDurationSec: 4, sampleRate: 6000, maxChars: 130000 },
+      { maxDurationSec: 3, sampleRate: 4000, maxChars: 100000 },
+    ];
+
+    let fallbackUrl = '';
+    for (const preset of presets) {
+      const asset = await prepareAudioAsset(file, preset);
+      const dataUrl = `data:${asset.mimeType};base64,${asset.base64}`;
+      fallbackUrl = dataUrl;
+      if (dataUrl.length <= preset.maxChars) {
+        return dataUrl;
+      }
+    }
+
+    return fallbackUrl;
+  };
+
+  const describeMediaUploadError = (error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (message.includes('storage/unauthorized')) return 'Media save permission denied.';
+    if (message.includes('storage/canceled')) return 'Upload was canceled.';
+    if (message.includes('storage/retry-limit-exceeded')) return 'Upload timed out.';
+    if (message.includes('permission')) return 'Permission denied while saving media.';
+
+    return message.length > 140 ? `${message.slice(0, 140)}...` : message;
+  };
+
+  const buildMediaMetadataWarning = (
+    uploadFailures: string[],
+    metadataError: string | null,
+    usedCreateFallback: boolean
+  ) => {
+    const warnings: string[] = [];
+
+    if (uploadFailures.length > 0) {
+      warnings.push(uploadFailures.join(' '));
+    }
+
+    if (metadataError) {
+      warnings.push(`Media URLs were saved, but upload status details could not be stored: ${metadataError}`);
+    }
+
+    if (usedCreateFallback) {
+      warnings.push('Incident history is running in compatibility mode because Firestore rejected the new upload-tracking fields.');
+    }
+
+    return warnings.length > 0 ? warnings.join(' ') : null;
   };
 
   const runAnalysis = async () => {
     if (!imageFile) return alert('Please upload an image or video frame.');
     setLoading(true);
+    setSavingReport(false);
     setAnalysis(null);
     setCurrentReportId(null);
     setReportSaveError(null);
+    setMediaSaveWarning(null);
     setFeedbackGiven(null);
     setIsOverridden(false);
 
     try {
-      const imageBase64 = await compressImage(imageFile);
-      let audioBase64 = null;
-      let audioMimeType = null;
-      
-      if (audioFile) {
-        audioBase64 = await fileToBase64(audioFile);
-        audioMimeType = audioFile.type;
-      }
+      const analysisVisual = await prepareVisualAsset(imageFile, {
+        maxWidth: 1440,
+        maxHeight: 1440,
+        quality: 0.8,
+        frameTimeSec: 1,
+      });
+
+      const analysisAudio = audioFile
+        ? await prepareAudioAsset(audioFile, {
+            maxDurationSec: 10,
+            sampleRate: 16000,
+          })
+        : null;
 
       // Build past context string
       const recentContext = reports.slice(0, 15).map(r => 
@@ -359,39 +602,19 @@ export function IncidentAnalysis({ reports }: Props) {
       const telemetryString = `Telemetry: Status: Stopped. Average Speed Before Stop: ${avgSpeed}km/h. Distance to object: ${distance}m. Location: Lat ${lat}, Lng ${lng}.`;
 
       const result = await analyzeIncident(
-        imageBase64,
-        imageFile.type.startsWith('video/') ? imageFile.type : 'image/jpeg',
-        audioBase64,
-        audioMimeType,
+        analysisVisual.base64,
+        analysisVisual.mimeType,
+        analysisAudio?.base64 || null,
+        analysisAudio?.mimeType || null,
         telemetryString,
         recentContext
       );
 
+      setAnalysis(result);
+      setLoading(false);
+
       const docRef = doc(collection(db, 'incident_reports'));
-      const [storedImageUrl, storedAudioUrl] = await Promise.all([
-        uploadMediaFile(imageFile, docRef.id, 'visual').catch((error) => {
-          console.warn('Image upload to Firebase Storage failed:', error);
-          return null;
-        }),
-        audioFile
-          ? uploadMediaFile(audioFile, docRef.id, 'audio').catch((error) => {
-              console.warn('Audio upload to Firebase Storage failed:', error);
-              return null;
-            })
-          : Promise.resolve(null),
-      ]);
-
-      let fallbackAudioUrl: string | null = null;
-      if (!storedAudioUrl && audioFile) {
-        try {
-          const compressedAudio = await compressAudio(audioFile);
-          fallbackAudioUrl = `data:${compressedAudio.mimeType};base64,${compressedAudio.base64}`;
-        } catch (error) {
-          console.warn('Audio fallback encoding failed:', error);
-        }
-      }
-
-      const docData: any = {
+      const baseDocData: any = {
         id: docRef.id,
         timestamp: serverTimestamp(),
         operatorId: auth.currentUser?.uid,
@@ -402,33 +625,86 @@ export function IncidentAnalysis({ reports }: Props) {
         lat: parseFloat(lat) || 0,
         lng: parseFloat(lng) || 0,
         analysis: result,
-        imageUrl: storedImageUrl || `data:${imageFile.type.startsWith('video/') ? imageFile.type : 'image/jpeg'};base64,${imageBase64}`,
       };
-
-      if (storedAudioUrl) {
-        docData.audioUrl = storedAudioUrl;
-      } else if (fallbackAudioUrl) {
-        docData.audioUrl = fallbackAudioUrl;
-      }
+      const docData: any = {
+        ...baseDocData,
+        imageUploadStatus: 'pending',
+        audioUploadStatus: audioFile ? 'pending' : 'not_provided',
+      };
+      let usedCreateFallback = false;
 
       try {
         await setDoc(docRef, docData);
         setCurrentReportId(docRef.id);
       } catch (error) {
-        console.error('Firestore save with media references failed, retrying without media URLs:', error);
+        console.warn('Initial Firestore save with media status fields failed, retrying with compatibility payload:', error);
         try {
-          delete docData.imageUrl;
-          delete docData.audioUrl;
-          await setDoc(docRef, docData);
+          await setDoc(docRef, baseDocData);
           setCurrentReportId(docRef.id);
-          console.warn('Saved without media due to size constraints.');
-        } catch (retryError) {
-          console.error('Firestore save failed entirely:', retryError);
+          usedCreateFallback = true;
+        } catch (fallbackError) {
+          console.error('Initial Firestore save failed:', fallbackError);
           setReportSaveError('Analysis completed, but the incident record could not be saved. Feedback and final operator actions are disabled until persistence succeeds.');
+          return;
         }
       }
 
-      setAnalysis(result);
+      setSavingReport(true);
+
+      void (async () => {
+        try {
+          const urlUpdates: Record<string, any> = {};
+          const metadataUpdates: Record<string, any> = {};
+          const failureMessages: string[] = [];
+          let metadataUpdateError: string | null = null;
+
+          try {
+            const storedImageUrl = await prepareInlineVisualUrl(imageFile);
+            urlUpdates.imageUrl = storedImageUrl;
+            metadataUpdates.imageUploadStatus = 'uploaded';
+            metadataUpdates.imageUploadError = '';
+          } catch (error) {
+            const reason = describeMediaUploadError(error);
+            metadataUpdates.imageUploadStatus = 'failed';
+            metadataUpdates.imageUploadError = reason;
+            failureMessages.push(`Image: ${reason}`);
+          }
+
+          if (audioFile) {
+            try {
+              const storedAudioUrl = await prepareInlineAudioUrl(audioFile);
+              urlUpdates.audioUrl = storedAudioUrl;
+              metadataUpdates.audioUploadStatus = 'uploaded';
+              metadataUpdates.audioUploadError = '';
+            } catch (error) {
+              const reason = describeMediaUploadError(error);
+              metadataUpdates.audioUploadStatus = 'failed';
+              metadataUpdates.audioUploadError = reason;
+              failureMessages.push(`Audio: ${reason}`);
+            }
+          }
+
+          if (Object.keys(urlUpdates).length > 0) {
+            await updateDoc(doc(db, 'incident_reports', docRef.id), urlUpdates);
+          }
+
+          if (Object.keys(metadataUpdates).length > 0) {
+            try {
+              await updateDoc(doc(db, 'incident_reports', docRef.id), metadataUpdates);
+            } catch (error) {
+              console.warn('Media metadata update failed after URL save:', error);
+              metadataUpdateError = describeMediaUploadError(error);
+            }
+          }
+
+          setMediaSaveWarning(buildMediaMetadataWarning(failureMessages, metadataUpdateError, usedCreateFallback));
+        } catch (error) {
+          console.error('Background media save failed:', error);
+          setMediaSaveWarning(`Incident metadata is saved, but media status could not be updated: ${describeMediaUploadError(error)}`);
+        } finally {
+          setSavingReport(false);
+        }
+      })();
 
     } catch (error) {
       console.error(error);
@@ -498,11 +774,14 @@ export function IncidentAnalysis({ reports }: Props) {
         setImagePreview(null);
         setAudioFile(null);
         setAudioUrl(null);
+        setSavingReport(false);
         setCurrentReportId(null);
         setIsOverridden(false);
         setFeedbackGiven(null);
         setFeedbackText('');
         setFeedbackSaved(false);
+        setReportSaveError(null);
+        setMediaSaveWarning(null);
         setShowAllSimilar(false);
         setAvgSpeed('');
         setDistance('');
@@ -545,11 +824,14 @@ export function IncidentAnalysis({ reports }: Props) {
         setImagePreview(null);
         setAudioFile(null);
         setAudioUrl(null);
+        setSavingReport(false);
         setCurrentReportId(null);
         setIsOverridden(false);
         setFeedbackGiven(null);
         setFeedbackText('');
         setFeedbackSaved(false);
+        setReportSaveError(null);
+        setMediaSaveWarning(null);
         setShowAllSimilar(false);
         setAvgSpeed('');
         setDistance('');
@@ -694,7 +976,7 @@ export function IncidentAnalysis({ reports }: Props) {
                 if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                   const file = e.dataTransfer.files[0];
                   if (isVisualFile(file)) {
-                    setSelectedVisualFile(file);
+                    void setSelectedVisualFile(file);
                   }
                 }
               }}
@@ -893,9 +1175,12 @@ export function IncidentAnalysis({ reports }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Image Column */}
               <div className="flex flex-col gap-2">
-                <span className={`self-start px-2 py-1 text-xs rounded border ${imageFile ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
-                  {imageFile ? (imageFile.type.startsWith('video/') ? '📹 Video Captured' : '📷 Image Captured') : '❌ No Image Captured'}
+                <span className={`self-start px-2 py-1 text-xs rounded border ${currentImageMedia.badgeClass}`}>
+                  {currentImageMedia.label}
                 </span>
+                {currentImageMedia.detail && (
+                  <p className="text-xs text-zinc-500">{currentImageMedia.detail}</p>
+                )}
                 {imagePreview && (
                   <div 
                     className="border border-white/10 rounded-lg overflow-hidden bg-black/30 cursor-pointer hover:border-blue-500/50 transition-colors relative group h-32"
@@ -913,9 +1198,12 @@ export function IncidentAnalysis({ reports }: Props) {
 
               {/* Audio Column */}
               <div className="flex flex-col gap-2">
-                <span className={`self-start px-2 py-1 text-xs rounded border ${audioFile ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
-                  {audioFile ? '🔊 Audio Captured' : '🔇 No Audio Captured'}
+                <span className={`self-start px-2 py-1 text-xs rounded border ${currentAudioMedia.badgeClass}`}>
+                  {currentAudioMedia.label}
                 </span>
+                {currentAudioMedia.detail && (
+                  <p className="text-xs text-zinc-500">{currentAudioMedia.detail}</p>
+                )}
                 {audioUrl && (
                   <div className="bg-black/30 border border-white/10 rounded-lg p-3 flex items-center justify-center h-32">
                     <audio controls src={audioUrl} className="w-full max-w-[200px]" />
@@ -1144,15 +1432,21 @@ export function IncidentAnalysis({ reports }: Props) {
                 </div>
               </div>
 
-              {!currentReportId && (
-                <div className="text-xs text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded px-3 py-2">
-                  Saving incident record. Feedback and final operator actions will unlock once persistence completes.
+              {savingReport && !reportSaveError && (
+                <div className="text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded px-3 py-2">
+                  Analysis is ready. The incident record is saved, and compressed media is being written in the background.
                 </div>
               )}
 
               {reportSaveError && (
                 <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded px-3 py-2">
                   {reportSaveError}
+                </div>
+              )}
+
+              {mediaSaveWarning && !reportSaveError && (
+                <div className="text-xs text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded px-3 py-2">
+                  {mediaSaveWarning}
                 </div>
               )}
 
@@ -1220,9 +1514,12 @@ export function IncidentAnalysis({ reports }: Props) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Image Column */}
                 <div className="flex flex-col gap-2">
-                  <span className={`self-start px-2 py-1 text-xs rounded border ${selectedPastIncident.imageUrl ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
-                    {selectedPastIncident.imageUrl ? '📷 Image Captured' : '❌ No Image Captured'}
+                  <span className={`self-start px-2 py-1 text-xs rounded border ${selectedPastImageMedia?.badgeClass}`}>
+                    {selectedPastImageMedia?.label}
                   </span>
+                  {selectedPastImageMedia?.detail && (
+                    <p className="text-xs text-zinc-500">{selectedPastImageMedia.detail}</p>
+                  )}
                   {selectedPastIncident.imageUrl && (
                     <div 
                       className="border border-white/10 rounded-lg overflow-hidden bg-black/30 cursor-pointer hover:border-blue-500/50 transition-colors relative group h-48"
@@ -1240,9 +1537,12 @@ export function IncidentAnalysis({ reports }: Props) {
 
                 {/* Audio Column */}
                 <div className="flex flex-col gap-2">
-                  <span className={`self-start px-2 py-1 text-xs rounded border ${selectedPastIncident.audioUrl ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
-                    {selectedPastIncident.audioUrl ? '🔊 Audio Captured' : '🔇 No Audio Captured'}
+                  <span className={`self-start px-2 py-1 text-xs rounded border ${selectedPastAudioMedia?.badgeClass}`}>
+                    {selectedPastAudioMedia?.label}
                   </span>
+                  {selectedPastAudioMedia?.detail && (
+                    <p className="text-xs text-zinc-500">{selectedPastAudioMedia.detail}</p>
+                  )}
                   {selectedPastIncident.audioUrl && (
                     <div className="bg-black/30 border border-white/10 rounded-lg p-3 flex items-center justify-center h-48">
                       <audio controls src={selectedPastIncident.audioUrl} className="w-full max-w-[200px]" />

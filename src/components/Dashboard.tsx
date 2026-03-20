@@ -8,6 +8,7 @@ import { IncidentReport } from '../types';
 import { format } from 'date-fns';
 import { handleFirestoreError } from '../utils/errorHandler';
 import { OperationType } from '../types';
+import { getMediaUploadDisplay } from '../utils/mediaUploadStatus';
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState<'analysis' | 'history' | 'simulator' | 'sop' | 'map' | 'transcription' | 'summary'>('analysis');
@@ -142,6 +143,16 @@ function NavItem({ icon, label, active, onClick }: { icon: React.ReactNode, labe
 function HistoryView({ reports, loading }: { reports: IncidentReport[], loading: boolean }) {
   const [selectedReport, setSelectedReport] = useState<IncidentReport | null>(null);
   const [reportToDelete, setReportToDelete] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedReport) return;
+
+    const latestReport = reports.find((report) => report.id === selectedReport.id);
+    if (latestReport) {
+      setSelectedReport(latestReport);
+    }
+  }, [reports, selectedReport]);
+
   const handleDelete = async () => {
     if (!reportToDelete) return;
     try {
@@ -168,6 +179,9 @@ function HistoryView({ reports, loading }: { reports: IncidentReport[], loading:
     }
     return null;
   };
+
+  const selectedImageMedia = selectedReport ? getMediaUploadDisplay(selectedReport, 'image') : null;
+  const selectedAudioMedia = selectedReport ? getMediaUploadDisplay(selectedReport, 'audio') : null;
 
   return (
     <>
@@ -278,9 +292,12 @@ function HistoryView({ reports, loading }: { reports: IncidentReport[], loading:
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Image Column */}
                 <div className="flex flex-col gap-2">
-                  <span className={`self-start px-2 py-1 text-xs rounded border ${selectedReport.imageUrl ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
-                    {selectedReport.imageUrl ? '📷 Image Captured' : '❌ No Image Captured'}
+                  <span className={`self-start px-2 py-1 text-xs rounded border ${selectedImageMedia?.badgeClass}`}>
+                    {selectedImageMedia?.label}
                   </span>
+                  {selectedImageMedia?.detail && (
+                    <p className="text-xs text-zinc-500">{selectedImageMedia.detail}</p>
+                  )}
                   {selectedReport.imageUrl && (
                     <div className="border border-white/10 rounded-lg overflow-hidden bg-black/30 h-48">
                       <img src={selectedReport.imageUrl} alt="Captured" className="w-full h-full object-contain" />
@@ -290,9 +307,12 @@ function HistoryView({ reports, loading }: { reports: IncidentReport[], loading:
 
                 {/* Audio Column */}
                 <div className="flex flex-col gap-2">
-                  <span className={`self-start px-2 py-1 text-xs rounded border ${selectedReport.audioUrl ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
-                    {selectedReport.audioUrl ? '🔊 Audio Captured' : '🔇 No Audio Captured'}
+                  <span className={`self-start px-2 py-1 text-xs rounded border ${selectedAudioMedia?.badgeClass}`}>
+                    {selectedAudioMedia?.label}
                   </span>
+                  {selectedAudioMedia?.detail && (
+                    <p className="text-xs text-zinc-500">{selectedAudioMedia.detail}</p>
+                  )}
                   {selectedReport.audioUrl && (
                     <div className="bg-black/30 border border-white/10 rounded-lg p-3 flex items-center justify-center h-48">
                       <audio controls src={selectedReport.audioUrl} className="w-full max-w-[200px]" />

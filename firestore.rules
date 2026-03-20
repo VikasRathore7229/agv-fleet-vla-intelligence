@@ -71,7 +71,7 @@ service cloud.firestore {
     }
 
     function isValidIncidentReport(data) {
-      return hasOnlyAllowedFields(['id', 'timestamp', 'operatorId', 'status', 'telemetry', 'avgSpeed', 'distance', 'lat', 'lng', 'audioUrl', 'analysis', 'feedback', 'operator_feedback_notes', 'operator_action', 'overridden', 'override_warning_shown', 'imageUrl']) &&
+      return hasOnlyAllowedFields(['id', 'timestamp', 'operatorId', 'status', 'telemetry', 'avgSpeed', 'distance', 'lat', 'lng', 'audioUrl', 'audioUploadStatus', 'audioUploadError', 'analysis', 'feedback', 'operator_feedback_notes', 'operator_action', 'overridden', 'override_warning_shown', 'imageUrl', 'imageUploadStatus', 'imageUploadError']) &&
              data.id is string && data.id.size() > 0 && data.id.size() < 100 &&
              data.timestamp is timestamp &&
              data.operatorId is string && data.operatorId.size() > 0 && data.operatorId.size() < 100 &&
@@ -82,12 +82,16 @@ service cloud.firestore {
              (!('lat' in data) || data.lat is number) &&
              (!('lng' in data) || data.lng is number) &&
              (!('audioUrl' in data) || (data.audioUrl is string && data.audioUrl.size() < 5000000)) &&
+             (!('audioUploadStatus' in data) || data.audioUploadStatus in ['pending', 'uploaded', 'failed', 'not_provided']) &&
+             (!('audioUploadError' in data) || (data.audioUploadError is string && data.audioUploadError.size() < 500)) &&
              (!('feedback' in data) || data.feedback in ['good', 'bad']) &&
              (!('operator_feedback_notes' in data) || (data.operator_feedback_notes is string && data.operator_feedback_notes.size() < 10000)) &&
              (!('operator_action' in data) || (data.operator_action is string && data.operator_action.size() < 10000)) &&
              (!('overridden' in data) || data.overridden is bool) &&
              (!('override_warning_shown' in data) || (data.override_warning_shown is string && data.override_warning_shown.size() < 10000)) &&
              (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() < 5000000)) &&
+             (!('imageUploadStatus' in data) || data.imageUploadStatus in ['pending', 'uploaded', 'failed', 'not_provided']) &&
+             (!('imageUploadError' in data) || (data.imageUploadError is string && data.imageUploadError.size() < 500)) &&
              data.analysis is map;
     }
 
@@ -108,13 +112,19 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidIncidentReport(request.resource.data) &&
                     request.resource.data.operatorId == request.auth.uid;
       allow update: if isAuthenticated() && 
-                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['feedback', 'operator_feedback_notes', 'operator_action', 'overridden', 'override_warning_shown', 'status']) &&
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['feedback', 'operator_feedback_notes', 'operator_action', 'overridden', 'override_warning_shown', 'status', 'imageUrl', 'imageUploadStatus', 'imageUploadError', 'audioUrl', 'audioUploadStatus', 'audioUploadError']) &&
                     (!('feedback' in request.resource.data) || request.resource.data.feedback in ['good', 'bad']) &&
                     (!('operator_feedback_notes' in request.resource.data) || (request.resource.data.operator_feedback_notes is string && request.resource.data.operator_feedback_notes.size() < 10000)) &&
                     (!('operator_action' in request.resource.data) || (request.resource.data.operator_action is string && request.resource.data.operator_action.size() < 10000)) &&
                     (!('overridden' in request.resource.data) || request.resource.data.overridden is bool) &&
                     (!('override_warning_shown' in request.resource.data) || (request.resource.data.override_warning_shown is string && request.resource.data.override_warning_shown.size() < 10000)) &&
                     (!('status' in request.resource.data) || request.resource.data.status in ['pending', 'reviewed', 'resolved']) &&
+                    (!('imageUrl' in request.resource.data) || (request.resource.data.imageUrl is string && request.resource.data.imageUrl.size() < 5000000)) &&
+                    (!('imageUploadStatus' in request.resource.data) || request.resource.data.imageUploadStatus in ['pending', 'uploaded', 'failed', 'not_provided']) &&
+                    (!('imageUploadError' in request.resource.data) || (request.resource.data.imageUploadError is string && request.resource.data.imageUploadError.size() < 500)) &&
+                    (!('audioUrl' in request.resource.data) || (request.resource.data.audioUrl is string && request.resource.data.audioUrl.size() < 5000000)) &&
+                    (!('audioUploadStatus' in request.resource.data) || request.resource.data.audioUploadStatus in ['pending', 'uploaded', 'failed', 'not_provided']) &&
+                    (!('audioUploadError' in request.resource.data) || (request.resource.data.audioUploadError is string && request.resource.data.audioUploadError.size() < 500)) &&
                     request.resource.data.operatorId == resource.data.operatorId;
       allow delete: if isAuthenticated() && (request.auth.uid == resource.data.operatorId || isAdmin());
     }

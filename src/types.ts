@@ -1,5 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 
+export type MediaUploadStatus = 'pending' | 'uploaded' | 'failed' | 'not_provided';
+
 export interface User {
   uid: string;
   email: string;
@@ -19,6 +21,8 @@ export interface IncidentReport {
   lat?: number;
   lng?: number;
   audioUrl?: string;
+  audioUploadStatus?: MediaUploadStatus;
+  audioUploadError?: string;
   analysis: VLAAnalysis;
   feedback?: 'good' | 'bad';
   operator_feedback_notes?: string;
@@ -26,6 +30,8 @@ export interface IncidentReport {
   overridden?: boolean;
   override_warning_shown?: string;
   imageUrl?: string;
+  imageUploadStatus?: MediaUploadStatus;
+  imageUploadError?: string;
 }
 
 export interface VLAAnalysis {
