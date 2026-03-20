@@ -9,7 +9,7 @@ const MODEL_NAME = process.env.GEMINI_BENCHMARK_MODEL || 'gemini-2.5-flash';
 const REQUEST_DELAY_MS = 20000;
 const RETRY_DELAY_MS = 60000;
 const MAX_RETRIES = 6;
-const STATE_PATH = 'paper/benchmark_run_state.json';
+const STATE_PATH = 'docs/academic_paper/benchmark_run_state.json';
 
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
@@ -262,8 +262,8 @@ async function run() {
     };
   }
 
-  fs.writeFileSync('paper/benchmark_results.json', JSON.stringify(output, null, 2));
-  console.log('Done! Wrote paper/benchmark_results.json');
+  fs.writeFileSync('docs/academic_paper/benchmark_results.json', JSON.stringify(output, null, 2));
+  console.log('Done! Wrote docs/academic_paper/benchmark_results.json');
 }
 
 run();

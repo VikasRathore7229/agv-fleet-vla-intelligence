@@ -52,5 +52,5 @@ const output = {
   ],
 };
 
-fs.writeFileSync('paper/benchmark_audit.json', JSON.stringify(output, null, 2));
-console.log('Done! Wrote paper/benchmark_audit.json');
+fs.writeFileSync('docs/academic_paper/benchmark_audit.json', JSON.stringify(output, null, 2));
+console.log('Done! Wrote docs/academic_paper/benchmark_audit.json');

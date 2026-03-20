@@ -22,8 +22,8 @@ This repository contains a university project prototype for operator-facing anal
 ## Repository structure
 
 - `src/`: React frontend, Firebase integration, Gemini service, and dashboard components
-- `scripts/`: benchmark runner, benchmark audit script, and pilot scenario definitions
-- `paper/`: IEEE-style report, figures, bibliography, and generated PDF
+- `benchmarks/`: benchmark runner, benchmark audit script, and pilot scenario definitions
+- `docs/academic_paper/`: IEEE-style report, figures, bibliography, and generated PDF
 - `dist/`: production build output
 - `firebase-applet-config.json`: Firebase project configuration used by the app
 
@@ -104,30 +104,30 @@ Current status:
 Run the offline pilot audit:
 
 ```bash
-npx tsx scripts/audit_benchmark.ts
+npx tsx benchmarks/audit_benchmark.ts
 ```
 
 Run the conservative text-based benchmark harness:
 
 ```bash
-npx tsx scripts/run_benchmark.ts
+npx tsx benchmarks/run_benchmark.ts
 ```
 
 Notes:
 
 - The benchmark harness depends on available Gemini API quota
-- The harness includes checkpointing in `paper/benchmark_run_state.json`
+- The harness includes checkpointing in `docs/academic_paper/benchmark_run_state.json`
 - The offline audit does not consume API quota
 
 ## Report and deliverables
 
-- Main paper source: `paper/paper.tex`
-- Compiled report: `paper/paper.pdf`
+- Main paper source: `docs/academic_paper/paper.tex`
+- Compiled report: `docs/academic_paper/paper.pdf`
 - Functional diagrams:
-  - `paper/figures/system_architecture.png`
-  - `paper/figures/prompt_pipeline.png`
-- Standalone conclusion summary: `CONCLUSION_SUMMARY.md`
-- Presentation outline: `presentation/SLIDE_OUTLINE.md`
+  - `docs/academic_paper/figures/system_architecture.png`
+  - `docs/academic_paper/figures/prompt_pipeline.png`
+- Standalone conclusion summary: `docs/CONCLUSION_SUMMARY.md`
+- Presentation outline: `docs/presentation/SLIDE_OUTLINE.md`
 
 ## Known limitations
 
