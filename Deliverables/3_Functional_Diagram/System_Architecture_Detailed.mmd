@@ -1,0 +1,97 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#FFFFFF",
+    "fontFamily": "Helvetica, Arial, sans-serif",
+    "fontSize": "18px",
+    "primaryTextColor": "#0F172A",
+    "lineColor": "#64748B",
+    "clusterBkg": "#FFFFFF",
+    "clusterBorder": "#CBD5E1"
+  },
+  "flowchart": {
+    "curve": "linear",
+    "htmlLabels": true,
+    "nodeSpacing": 26,
+    "rankSpacing": 36
+  }
+}}%%
+flowchart TD
+    classDef physical fill:#E0ECFF,stroke:#1E40AF,stroke-width:1.8px,color:#0F172A
+    classDef ingest   fill:#E0F2FE,stroke:#0369A1,stroke-width:1.8px,color:#0F172A
+    classDef auth     fill:#DCFCE7,stroke:#0F766E,stroke-width:1.8px,color:#0F172A
+    classDef service  fill:#ECFDF5,stroke:#059669,stroke-width:1.8px,color:#0F172A
+    classDef ai       fill:#F3E8FF,stroke:#7C3AED,stroke-width:1.8px,color:#0F172A
+    classDef operator fill:#FEF3C7,stroke:#D97706,stroke-width:1.8px,color:#0F172A
+    classDef db       fill:#FEE2E2,stroke:#DC2626,stroke-width:1.8px,color:#0F172A
+
+    subgraph S1["1. Physical AGV Environment"]
+        direction LR
+        C["Camera"]:::physical
+        P["Proximity Sensor"]:::physical
+        M["Microphone"]:::physical
+    end
+
+    subgraph S2["2. Data Ingestion<br/>Live API; simulated in prototype"]
+        direction LR
+        VI["Visual Evidence"]:::ingest
+        TD["Telemetry Data"]:::ingest
+        AU["Audio Evidence"]:::ingest
+    end
+
+    subgraph S3["3. Firebase Auth<br/>Route Guard; Google Sign-In"]
+        direction LR
+        FB["Verifies session; stamps operatorId on every write"]:::auth
+    end
+
+    subgraph S4["4. Client-Side Prompt Assembly"]
+        direction LR
+        HF["History Retrieval<br/>Top-K Past Events"]:::service
+        PA["Prompt Builder<br/>Image, Audio, Telemetry, History"]:::service
+    end
+
+    subgraph S5["5. Gemini VLA<br/>gemini-3-flash-preview; Temp 0.0"]
+        direction LR
+        GM["Schema-Constrained JSON<br/>perception, reasoning, action, ui_triggers"]:::ai
+    end
+
+    subgraph S6["6. Result and Persistence"]
+        direction LR
+        DV["Assessment Viewer<br/>Score and Recommendation"]:::service
+        FS[("Firestore Database<br/>Incidents and Decisions")]:::db
+    end
+
+    subgraph S7["7. Operator Decision"]
+        direction LR
+        DC["Override, Confirm Stop, Feedback"]:::operator
+    end
+
+    style S1 fill:#F8FAFC,stroke:#CBD5E1,stroke-width:1.4px
+    style S2 fill:#F8FAFC,stroke:#CBD5E1,stroke-width:1.4px
+    style S3 fill:#F8FAFC,stroke:#CBD5E1,stroke-width:1.4px
+    style S4 fill:#F8FAFC,stroke:#CBD5E1,stroke-width:1.4px
+    style S5 fill:#F8FAFC,stroke:#CBD5E1,stroke-width:1.4px
+    style S6 fill:#F8FAFC,stroke:#CBD5E1,stroke-width:1.4px
+    style S7 fill:#F8FAFC,stroke:#CBD5E1,stroke-width:1.4px
+
+    C -->|Frame| VI
+    P -->|Payload| TD
+    M -->|Blob| AU
+
+    VI --> FB
+    TD --> FB
+    AU --> FB
+
+    FB -->|Authenticated Session| PA
+    HF -->|Top-K Context| PA
+    FS -.->|Past Records| HF
+
+    PA -->|Multimodal Prompt| GM
+
+    GM -->|4-Block JSON| DV
+    GM -.->|Auto-save| FS
+
+    DV -->|Operator Review| DC
+    DC -->|Write Decision| FS
+
+    linkStyle default stroke:#64748B,stroke-width:1.8px,color:#334155

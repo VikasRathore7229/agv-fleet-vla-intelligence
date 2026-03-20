@@ -31,10 +31,10 @@ export function IncidentAnalysis({ reports }: Props) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
-  const [avgSpeed, setAvgSpeed] = useState('5');
-  const [distance, setDistance] = useState('1.5');
-  const [lat, setLat] = useState('50.0333');
-  const [lng, setLng] = useState('8.5706');
+  const [avgSpeed, setAvgSpeed] = useState('');
+  const [distance, setDistance] = useState('');
+  const [lat, setLat] = useState('');
+  const [lng, setLng] = useState('');
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<VLAAnalysis | null>(null);
   const [currentReportId, setCurrentReportId] = useState<string | null>(null);
@@ -397,6 +397,10 @@ export function IncidentAnalysis({ reports }: Props) {
         setFeedbackText('');
         setFeedbackSaved(false);
         setShowAllSimilar(false);
+        setAvgSpeed('');
+        setDistance('');
+        setLat('');
+        setLng('');
       }, 3000);
       
     } catch (error) {
@@ -437,6 +441,10 @@ export function IncidentAnalysis({ reports }: Props) {
         setFeedbackText('');
         setFeedbackSaved(false);
         setShowAllSimilar(false);
+        setAvgSpeed('');
+        setDistance('');
+        setLat('');
+        setLng('');
       }, 3000);
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `incident_reports/${currentReportId}`);

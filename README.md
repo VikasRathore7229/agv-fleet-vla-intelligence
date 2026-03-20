@@ -4,13 +4,13 @@ This repository contains a university project prototype for operator-facing anal
 
 ## What the prototype does
 
-- Accepts an uploaded image or video frame from a stopped AGV incident
-- Accepts optional ambient audio for cross-modal cues
-- Accepts typed telemetry such as speed, distance, latitude, and longitude
+- Receives incident data from a stopped AGV: a visual frame, optional ambient audio, and telemetry (speed, distance, GPS coordinates). In the production model this data arrives automatically; in the current prototype it is supplied via an input form to simulate the incoming feed.
 - Calls a Gemini multimodal model to produce a structured JSON assessment
 - Presents a `1..5` danger score, recommended action, and operator-facing commentary
+- The operator reviews the AI recommendation and decides to confirm the stop or force override it
 - Stores incident records, operator decisions, and feedback in Firestore
 - Reuses recent incidents as prompt context for later advisory requests
+- Resets all input fields automatically after each operator decision (Override or Confirm Stop)
 
 ## Current scope
 
@@ -29,13 +29,14 @@ This repository contains a university project prototype for operator-facing anal
 
 ## Main application workflow
 
-1. The operator signs in with Google through Firebase Authentication.
-2. The operator uploads visual evidence and optional audio.
-3. The operator enters telemetry and map context.
-4. The app sends the assembled prompt to Gemini with a schema-constrained JSON response contract.
-5. The dashboard displays a danger score, recommendation, commentary, and UI alert state.
-6. The operator decides whether to keep the stop or override it.
-7. The incident, recommendation, and operator feedback are stored for later review.
+1. The system receives a stop event from the AGV: a visual frame, ambient audio, and telemetry (speed, distance to object, GPS coordinates). In the current prototype these are supplied via an input form to simulate the live sensor feed; in a production deployment they would be ingested automatically over an API or MQTT stream.
+2. The app authenticates the operator session via Firebase Authentication (Google Sign-In).
+3. The app assembles a multimodal prompt — combining the image, audio, telemetry string, and a top-K history of past incidents — and sends it to Gemini with a schema-constrained JSON response contract.
+4. The dashboard displays the AI assessment: a danger score (1–5), recommended action, reasoning commentary, and a colour-coded UI alert state.
+5. The operator reviews the recommendation and decides to either confirm the stop or force override it. A graded safety warning is shown for high danger scores.
+6. The operator can record or type free-text feedback to annotate their decision.
+7. The incident record, AI recommendation, operator decision, and feedback are written to Firestore.
+8. The system resets and is ready for the next stop event.
 
 ## Key implementation details
 
@@ -136,6 +137,7 @@ Notes:
 - History effects are weakly testable because only `1` pilot case contains history context
 - The benchmark harness does not fully exercise the production four-block schema
 - Firebase free-tier and Gemini free-tier quotas can limit reproducible reruns
+- Telemetry is manually entered by the operator in the prototype; a production deployment would ingest live sensor data (speed, GPS, object distance) from the AGV over an API or MQTT stream automatically pre-populating these fields
 
 ## Submission positioning
 
