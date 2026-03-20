@@ -31,7 +31,7 @@ python3 -m pip install --user -r requirements-presentation.txt
 Generate both final artifacts:
 
 ```bash
-python3 build_presentation.py --formats pptx,pdf --output-dir ../../2_Presentationand_Video
+python3 build_presentation.py --formats pptx,pdf --output-dir ../../2_Presentation_and_Video
 ```
 
 Generate a single format if needed:
@@ -45,7 +45,7 @@ python3 build_presentation.py --formats pdf
 
 The final submission files are written to:
 
-- `Deliverables/2_Presentationand_Video/VLA-1 Rat Kho Final Presentation.pptx`
-- `Deliverables/2_Presentationand_Video/VLA-1 Rat Kho Final Presentation.pdf`
+- `Deliverables/2_Presentation_and_Video/VLA-1 Rat Kho Final Presentation.pptx`
+- `Deliverables/2_Presentation_and_Video/VLA-1 Rat Kho Final Presentation.pdf`
 
 The numbered deliverable folder should contain only those final artifacts.

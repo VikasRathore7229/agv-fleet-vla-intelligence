@@ -1069,7 +1069,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--output-dir",
-        default="../../2_Presentationand_Video",
+        default="../../2_Presentation_and_Video",
         help="Output directory for final deliverables, resolved relative to this script.",
     )
     args = parser.parse_args()
