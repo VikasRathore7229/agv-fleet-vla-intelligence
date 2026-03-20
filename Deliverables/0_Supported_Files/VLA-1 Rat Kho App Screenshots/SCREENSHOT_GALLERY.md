@@ -1,6 +1,6 @@
 # App Screenshot Gallery
 
-This page renders the documentation screenshot series in the intended order. Save the PNG files in this folder using the filenames listed in `README.md`, and the images below will resolve automatically.
+This page renders the supporting UI evidence referenced by the application functionality report in [`../../3_Functional_Diagram/README.md`](../../3_Functional_Diagram/README.md). The PNG files in this folder are kept in a fixed order so the application's implemented workflow can be reviewed visually.
 
 ## 1. Sign In
 
