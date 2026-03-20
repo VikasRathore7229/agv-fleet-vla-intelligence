@@ -497,9 +497,9 @@ export function IncidentAnalysis({ reports }: Props) {
 
   const prepareInlineVisualUrl = async (file: File) => {
     const presets = [
-      { maxWidth: 512, maxHeight: 512, quality: 0.42, frameTimeSec: 1, maxChars: 220000 },
-      { maxWidth: 384, maxHeight: 384, quality: 0.32, frameTimeSec: 1, maxChars: 160000 },
-      { maxWidth: 320, maxHeight: 320, quality: 0.26, frameTimeSec: 1, maxChars: 120000 },
+      { maxWidth: 448, maxHeight: 448, quality: 0.35, frameTimeSec: 1, maxChars: 140000 },
+      { maxWidth: 320, maxHeight: 320, quality: 0.24, frameTimeSec: 1, maxChars: 90000 },
+      { maxWidth: 256, maxHeight: 256, quality: 0.18, frameTimeSec: 1, maxChars: 65000 },
     ];
 
     let fallbackUrl = '';
@@ -512,14 +512,18 @@ export function IncidentAnalysis({ reports }: Props) {
       }
     }
 
-    return fallbackUrl;
+    if (fallbackUrl && fallbackUrl.length <= presets[presets.length - 1].maxChars) {
+      return fallbackUrl;
+    }
+
+    throw new Error('Visual evidence is too large to store in Firestore after compression.');
   };
 
   const prepareInlineAudioUrl = async (file: File) => {
     const presets = [
-      { maxDurationSec: 6, sampleRate: 8000, maxChars: 180000 },
-      { maxDurationSec: 4, sampleRate: 6000, maxChars: 130000 },
-      { maxDurationSec: 3, sampleRate: 4000, maxChars: 100000 },
+      { maxDurationSec: 4, sampleRate: 6000, maxChars: 90000 },
+      { maxDurationSec: 3, sampleRate: 4000, maxChars: 60000 },
+      { maxDurationSec: 2, sampleRate: 3000, maxChars: 40000 },
     ];
 
     let fallbackUrl = '';
@@ -532,7 +536,11 @@ export function IncidentAnalysis({ reports }: Props) {
       }
     }
 
-    return fallbackUrl;
+    if (fallbackUrl && fallbackUrl.length <= presets[presets.length - 1].maxChars) {
+      return fallbackUrl;
+    }
+
+    throw new Error('Audio evidence is too large to store in Firestore after compression.');
   };
 
   const describeMediaUploadError = (error: unknown) => {
@@ -546,23 +554,11 @@ export function IncidentAnalysis({ reports }: Props) {
     return message.length > 140 ? `${message.slice(0, 140)}...` : message;
   };
 
-  const buildMediaMetadataWarning = (
-    uploadFailures: string[],
-    metadataError: string | null,
-    usedCreateFallback: boolean
-  ) => {
+  const buildMediaMetadataWarning = (uploadFailures: string[]) => {
     const warnings: string[] = [];
 
     if (uploadFailures.length > 0) {
       warnings.push(uploadFailures.join(' '));
-    }
-
-    if (metadataError) {
-      warnings.push(`Media URLs were saved, but upload status details could not be stored: ${metadataError}`);
-    }
-
-    if (usedCreateFallback) {
-      warnings.push('Incident history is running in compatibility mode because Firestore rejected the new upload-tracking fields.');
     }
 
     return warnings.length > 0 ? warnings.join(' ') : null;
@@ -612,6 +608,38 @@ export function IncidentAnalysis({ reports }: Props) {
 
       setAnalysis(result);
       setLoading(false);
+      setSavingReport(true);
+
+      const mediaDocFields: Record<string, any> = {};
+      const statusDocFields: Record<string, any> = {};
+      const failureMessages: string[] = [];
+
+      try {
+        mediaDocFields.imageUrl = await prepareInlineVisualUrl(imageFile);
+        statusDocFields.imageUploadStatus = 'uploaded';
+        statusDocFields.imageUploadError = '';
+      } catch (error) {
+        const reason = describeMediaUploadError(error);
+        statusDocFields.imageUploadStatus = 'failed';
+        statusDocFields.imageUploadError = reason;
+        failureMessages.push(`Image: ${reason}`);
+      }
+
+      if (audioFile) {
+        try {
+          mediaDocFields.audioUrl = await prepareInlineAudioUrl(audioFile);
+          statusDocFields.audioUploadStatus = 'uploaded';
+          statusDocFields.audioUploadError = '';
+        } catch (error) {
+          const reason = describeMediaUploadError(error);
+          statusDocFields.audioUploadStatus = 'failed';
+          statusDocFields.audioUploadError = reason;
+          failureMessages.push(`Audio: ${reason}`);
+        }
+      } else {
+        statusDocFields.audioUploadStatus = 'not_provided';
+        statusDocFields.audioUploadError = '';
+      }
 
       const docRef = doc(collection(db, 'incident_reports'));
       const baseDocData: any = {
@@ -625,86 +653,29 @@ export function IncidentAnalysis({ reports }: Props) {
         lat: parseFloat(lat) || 0,
         lng: parseFloat(lng) || 0,
         analysis: result,
+        ...mediaDocFields,
       };
       const docData: any = {
         ...baseDocData,
-        imageUploadStatus: 'pending',
-        audioUploadStatus: audioFile ? 'pending' : 'not_provided',
+        ...statusDocFields,
       };
-      let usedCreateFallback = false;
 
       try {
         await setDoc(docRef, docData);
         setCurrentReportId(docRef.id);
       } catch (error) {
-        console.warn('Initial Firestore save with media status fields failed, retrying with compatibility payload:', error);
+        console.warn('Initial Firestore save with upload-tracking fields failed, retrying with compatibility payload:', error);
         try {
           await setDoc(docRef, baseDocData);
           setCurrentReportId(docRef.id);
-          usedCreateFallback = true;
         } catch (fallbackError) {
           console.error('Initial Firestore save failed:', fallbackError);
           setReportSaveError('Analysis completed, but the incident record could not be saved. Feedback and final operator actions are disabled until persistence succeeds.');
           return;
         }
       }
-
-      setSavingReport(true);
-
-      void (async () => {
-        try {
-          const urlUpdates: Record<string, any> = {};
-          const metadataUpdates: Record<string, any> = {};
-          const failureMessages: string[] = [];
-          let metadataUpdateError: string | null = null;
-
-          try {
-            const storedImageUrl = await prepareInlineVisualUrl(imageFile);
-            urlUpdates.imageUrl = storedImageUrl;
-            metadataUpdates.imageUploadStatus = 'uploaded';
-            metadataUpdates.imageUploadError = '';
-          } catch (error) {
-            const reason = describeMediaUploadError(error);
-            metadataUpdates.imageUploadStatus = 'failed';
-            metadataUpdates.imageUploadError = reason;
-            failureMessages.push(`Image: ${reason}`);
-          }
-
-          if (audioFile) {
-            try {
-              const storedAudioUrl = await prepareInlineAudioUrl(audioFile);
-              urlUpdates.audioUrl = storedAudioUrl;
-              metadataUpdates.audioUploadStatus = 'uploaded';
-              metadataUpdates.audioUploadError = '';
-            } catch (error) {
-              const reason = describeMediaUploadError(error);
-              metadataUpdates.audioUploadStatus = 'failed';
-              metadataUpdates.audioUploadError = reason;
-              failureMessages.push(`Audio: ${reason}`);
-            }
-          }
-
-          if (Object.keys(urlUpdates).length > 0) {
-            await updateDoc(doc(db, 'incident_reports', docRef.id), urlUpdates);
-          }
-
-          if (Object.keys(metadataUpdates).length > 0) {
-            try {
-              await updateDoc(doc(db, 'incident_reports', docRef.id), metadataUpdates);
-            } catch (error) {
-              console.warn('Media metadata update failed after URL save:', error);
-              metadataUpdateError = describeMediaUploadError(error);
-            }
-          }
-
-          setMediaSaveWarning(buildMediaMetadataWarning(failureMessages, metadataUpdateError, usedCreateFallback));
-        } catch (error) {
-          console.error('Background media save failed:', error);
-          setMediaSaveWarning(`Incident metadata is saved, but media status could not be updated: ${describeMediaUploadError(error)}`);
-        } finally {
-          setSavingReport(false);
-        }
-      })();
+      setMediaSaveWarning(buildMediaMetadataWarning(failureMessages));
+      setSavingReport(false);
 
     } catch (error) {
       console.error(error);
@@ -1434,7 +1405,7 @@ export function IncidentAnalysis({ reports }: Props) {
 
               {savingReport && !reportSaveError && (
                 <div className="text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded px-3 py-2">
-                  Analysis is ready. The incident record is saved, and compressed media is being written in the background.
+                  Analysis is ready. Saving the incident record with compressed review media for Incident History.
                 </div>
               )}
 
